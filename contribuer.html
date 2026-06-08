@@ -418,7 +418,7 @@
 
     <!-- Photo -->
     <div class="field">
-      <label>Photo du tag</label>
+      <label>Photo du tag <span>*</span></label>
       <div class="upload-zone" id="upload-zone">
         <input type="file" id="photo-input" accept="image/*" onchange="handlePhoto(this)"/>
         <img class="upload-preview" id="upload-preview" alt="Aperçu"/>
@@ -632,12 +632,13 @@ function handlePhoto(input) {
     document.getElementById('upload-zone').classList.add('has-file');
   };
   reader.readAsDataURL(file);
+  checkFormReady();
 }
 
 // --- Vérifier si le formulaire est prêt ---
 function checkFormReady() {
   const blaze = document.getElementById('input-blaze').value.trim();
-  const ready = blaze.length > 0 && selectedLat !== null;
+  const ready = blaze.length > 0 && selectedLat !== null && selectedPhotoFile !== null;
   document.getElementById('submit-btn').disabled = !ready;
 }
 

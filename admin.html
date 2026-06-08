@@ -253,6 +253,21 @@
 
   <!-- Onglet : tags validés (pour audit) -->
   <div class="tab-panel" id="tab-validated">
+    <div style="padding: 16px 24px 0; display:flex; gap:10px; align-items:center;">
+      <input
+        type="text"
+        id="search-blaze"
+        placeholder="Rechercher un blaze..."
+        oninput="searchValidated(this.value)"
+        style="
+          font-family:'Caveat',cursive; font-size:17px;
+          padding:8px 14px; border-radius:8px; width:260px;
+          background:var(--surface2); border:0.5px solid var(--border);
+          color:var(--text); outline:none;
+        "
+      />
+      <span id="search-count" style="font-size:13px;color:var(--text-muted)"></span>
+    </div>
     <div class="tags-grid" id="grid-validated">
       <div class="empty-state">Chargement...</div>
     </div>
@@ -369,14 +384,36 @@ async function loadArchived() {
   renderGrid('grid-archived', tags, 'archived');
 }
 
-// Tags validés actifs (pour audit)
+// Tags validés actifs (pour audit) — tous chargés pour la recherche
+let allValidatedTags = [];
+
 async function loadValidated() {
   const { data, count } = await db.from('tags').select('*', { count: 'exact' })
     .eq('validated', true).eq('hidden', false).eq('archived', false)
-    .order('created_at', { ascending: false }).limit(50);
-  const tags = data || [];
+    .order('created_at', { ascending: false });
+  allValidatedTags = data || [];
   document.getElementById('badge-validated').textContent = count || 0;
-  renderGrid('grid-validated', tags, 'validated');
+  renderGrid('grid-validated', allValidatedTags, 'validated');
+  updateSearchCount(allValidatedTags.length);
+}
+
+function searchValidated(query) {
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? allValidatedTags.filter(t => t.blaze.toLowerCase().includes(q))
+    : allValidatedTags;
+  renderGrid('grid-validated', filtered, 'validated');
+  updateSearchCount(filtered.length, q);
+}
+
+function updateSearchCount(n, query) {
+  const el = document.getElementById('search-count');
+  if (!el) return;
+  if (query) {
+    el.textContent = n + ' résultat' + (n > 1 ? 's' : '');
+  } else {
+    el.textContent = n + ' tag' + (n > 1 ? 's' : '') + ' au total';
+  }
 }
 
 // --- Rendu des cartes ---
