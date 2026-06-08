@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Carte des tags — Guide complet
 
 Cartographie collaborative des tags street art. Les contributeurs déposent
@@ -464,3 +465,7 @@ function blazeSize(zoom) {
 ```
 
 Augmente les valeurs pour des blazes plus grands à tous les niveaux.
+=======
+# Street-Marpst
+This is a map where you can put location of tags with pictures
+>>>>>>> 52ef2f9bd27fee8e85fb96ae7221c39e300e09d5
