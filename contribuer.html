@@ -691,7 +691,7 @@ async function submitTag() {
       support: support || null,
       date_vue: dateVue || null,
       rotation,
-      validated: false,
+      validated: true,
     });
 
     if (error) throw new Error(error.message);
