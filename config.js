@@ -7,7 +7,7 @@ const CONFIG = {
 
   // --- Supabase ---
   // Récupère ces valeurs sur : https://supabase.com → ton projet → Settings → API
-  SUPABASE_URL: 'https://xaiocymsrtxpzhttcrre.supabase.co/rest/v1/',
+  SUPABASE_URL: 'https://xaiocymsrtxpzhttcrre.supabase.co',
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhaW9jeW1zcnR4cHpodHRjcnJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5Mzk5NjEsImV4cCI6MjA5NjUxNTk2MX0.oNHLKK5xd34KhT0IXHt2Hoz207RqU5Cq3x5ea8tUZec',
 
   // --- Cloudinary ---
