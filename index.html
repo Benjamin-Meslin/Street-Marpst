@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carte des tags</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Rubik+Dirt&family=Caveat:wght@700&display=swap" rel="stylesheet">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --border: rgba(255,255,255,0.08);
+      --text: #f0ede8;
+      --text-muted: #888;
+      --accent: #E63946;
+    }
+
+    body {
+      font-family: 'Caveat', cursive;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 52px;
+      border-bottom: 0.5px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+      z-index: 1000;
+    }
+
+    .logo {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 22px;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+
+    .logo span {
+      color: var(--text);
+      font-size: 14px;
+      font-family: 'Caveat', cursive;
+      margin-left: 8px;
+      opacity: 0.6;
+    }
+
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+
+    .btn {
+      font-family: 'Caveat', cursive;
+      font-size: 15px;
+      padding: 6px 16px;
+      border-radius: 6px;
+      border: 0.5px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+
+    .btn:hover { background: rgba(255,255,255,0.06); }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover { background: #c1121f; }
+
+    .filters {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      background: var(--surface);
+      border-bottom: 0.5px solid var(--border);
+      flex-shrink: 0;
+      overflow-x: auto;
+    }
+
+    .filter-label { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+
+    .filter-btn {
+      font-family: 'Caveat', cursive;
+      font-size: 13px;
+      padding: 3px 12px;
+      border-radius: 20px;
+      border: 0.5px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    .count-badge {
+      font-size: 11px;
+      background: rgba(255,255,255,0.08);
+      color: var(--text-muted);
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+
+    #map { flex: 1; z-index: 1; }
+
+    .leaflet-tile {
+      filter: brightness(0.45) contrast(1.1) saturate(0.6);
+    }
+
+    .blaze-marker {
+      cursor: pointer;
+      white-space: nowrap;
+      line-height: 1;
+      font-weight: 700;
+      -webkit-text-stroke: 0.5px rgba(0,0,0,0.3);
+      transition: transform 0.1s;
+      user-select: none;
+    }
+
+    .blaze-marker:hover { -webkit-text-stroke: 1px rgba(0,0,0,0.5); }
+
+    /* Popup */
+    .leaflet-popup-content-wrapper {
+      background: var(--surface) !important;
+      border: 0.5px solid var(--border) !important;
+      border-radius: 10px !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+      color: var(--text) !important;
+      font-family: 'Caveat', cursive !important;
+    }
+
+    .leaflet-popup-tip { background: var(--surface) !important; }
+    .leaflet-popup-content { margin: 12px 16px !important; font-size: 15px !important; }
+
+    .popup-blaze {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 20px;
+      margin-bottom: 6px;
+    }
+
+    .popup-photo {
+      width: 100%;
+      max-width: 220px;
+      height: 130px;
+      object-fit: cover;
+      border-radius: 6px;
+      margin: 8px 0;
+      display: block;
+    }
+
+    .popup-photo-placeholder {
+      width: 220px;
+      height: 60px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 8px 0;
+    }
+
+    .popup-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .popup-tag {
+      display: inline-block;
+      font-size: 11px;
+      padding: 1px 8px;
+      border-radius: 10px;
+      border: 0.5px solid var(--border);
+      color: var(--text-muted);
+      margin: 2px 2px 0 0;
+    }
+
+    /* Boutons signaler dans le popup */
+    .popup-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .popup-report-btn {
+      flex: 1;
+      padding: 6px 0;
+      font-family: 'Caveat', cursive;
+      font-size: 13px;
+      color: var(--text-muted);
+      background: transparent;
+      border: 0.5px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .popup-report-btn:hover { color: var(--accent); border-color: rgba(230,57,70,0.3); }
+
+    .popup-report-btn.disparu:hover {
+      color: #888;
+      border-color: rgba(150,150,150,0.4);
+    }
+
+    /* Blaze archivé (tag disparu) */
+    .blaze-marker.archived {
+      opacity: 0.35;
+      text-decoration: line-through;
+      filter: grayscale(1);
+    }
+
+    .popup-archived-badge {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.06);
+      border: 0.5px solid rgba(255,255,255,0.15);
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    /* Modal signalement */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 3000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 0.5px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 28px 28px 24px;
+      width: 340px;
+      max-width: 90vw;
+    }
+
+    .modal-title {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 20px;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .modal-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .motif-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+
+    .motif-btn {
+      font-family: 'Caveat', cursive;
+      font-size: 15px;
+      padding: 9px 14px;
+      border-radius: 8px;
+      border: 0.5px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.12s, border-color 0.12s;
+    }
+
+    .motif-btn:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); }
+    .motif-btn.selected { background: rgba(230,57,70,0.1); border-color: rgba(230,57,70,0.4); color: var(--accent); }
+
+    .modal-detail {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Caveat', cursive;
+      font-size: 15px;
+      padding: 8px 12px;
+      outline: none;
+      resize: none;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .modal-detail.show { display: block; }
+
+    .modal-actions { display: flex; gap: 10px; }
+
+    .modal-cancel {
+      flex: 1;
+      font-family: 'Caveat', cursive;
+      font-size: 15px;
+      padding: 9px;
+      border-radius: 8px;
+      border: 0.5px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .modal-submit {
+      flex: 2;
+      font-family: 'Permanent Marker', cursive;
+      font-size: 16px;
+      padding: 9px;
+      border-radius: 8px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .modal-submit:hover { background: #c1121f; }
+    .modal-submit:disabled { background: rgba(255,255,255,0.1); color: var(--text-muted); cursor: not-allowed; }
+
+    /* Footer mentions légales */
+    .map-footer {
+      position: absolute;
+      bottom: 8px;
+      right: 12px;
+      z-index: 2000;
+      font-size: 11px;
+    }
+
+    .map-footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+      background: rgba(15,15,15,0.7);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .map-footer a:hover { color: var(--text); }
+
+    .toast {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 14px;
+      color: var(--text);
+      z-index: 4000;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">TAGS<span>carte collaborative</span></div>
+  <div class="header-actions">
+    <span class="count-badge" id="count-badge">chargement...</span>
+    <a href="contribuer.html" class="btn btn-primary">+ Ajouter un tag</a>
+  </div>
+</header>
+
+<div class="filters">
+  <span class="filter-label">Style :</span>
+  <button class="filter-btn active" onclick="setFilter(this,'tous')">Tous</button>
+  <button class="filter-btn" onclick="setFilter(this,'tag simple')">Tag simple</button>
+  <button class="filter-btn" onclick="setFilter(this,'throw-up')">Throw-up</button>
+  <button class="filter-btn" onclick="setFilter(this,'calligraphie')">Calligraphie</button>
+  <button class="filter-btn" onclick="setFilter(this,'autre')">Autre</button>
+  <button class="filter-btn" onclick="setFilter(this,'archives')" style="margin-left:auto">👻 Archivés</button>
+</div>
+
+<div id="map"></div>
+
+<!-- Modal de signalement — 2 étapes -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+
+    <!-- Étape 1 : choisir le type de signalement -->
+    <div id="modal-step1">
+      <div class="modal-title">Signaler ce tag</div>
+      <div class="modal-sub">De quoi s'agit-il ?</div>
+      <div class="motif-list">
+        <button class="motif-btn" data-type="illicite" onclick="selectType(this)">
+          <span style="font-size:18px">⚑</span>
+          Contenu problématique
+          <span style="display:block;font-size:12px;color:var(--text-muted);margin-top:2px">
+            Contenu illicite, vie privée, propos haineux…
+          </span>
+        </button>
+        <button class="motif-btn" data-type="disparu" onclick="selectType(this)">
+          <span style="font-size:18px">👻</span>
+          Tag disparu
+          <span style="display:block;font-size:12px;color:var(--text-muted);margin-top:2px">
+            Le tag n'existe plus physiquement à cet endroit
+          </span>
+        </button>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeModal()">Annuler</button>
+      </div>
+    </div>
+
+    <!-- Étape 2a : motifs illicites -->
+    <div id="modal-step2-illicite" style="display:none">
+      <div class="modal-title">Contenu problématique</div>
+      <div class="modal-sub">
+        Après 3 signalements, le tag est masqué automatiquement.
+        Les contenus illicites sont traités sous 24–48h (obligation légale).
+      </div>
+      <div class="motif-list">
+        <button class="motif-btn" data-motif="contenu_illicite" onclick="selectMotif(this)">Contenu illicite ou choquant</button>
+        <button class="motif-btn" data-motif="vie_privee"       onclick="selectMotif(this)">Atteinte à la vie privée</button>
+        <button class="motif-btn" data-motif="haine"            onclick="selectMotif(this)">Propos haineux ou discriminatoires</button>
+        <button class="motif-btn" data-motif="autre"            onclick="selectMotif(this)">Autre motif</button>
+      </div>
+      <textarea class="modal-detail" id="modal-detail-illicite"
+        rows="2" placeholder="Précise si besoin (optionnel)…"></textarea>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="goToStep1()">← Retour</button>
+        <button class="modal-submit" id="modal-submit-illicite" onclick="submitReport('illicite')" disabled>
+          SIGNALER
+        </button>
+      </div>
+    </div>
+
+    <!-- Étape 2b : tag disparu -->
+    <div id="modal-step2-disparu" style="display:none">
+      <div class="modal-title">Tag disparu ?</div>
+      <div class="modal-sub">
+        Après 5 signalements, le tag sera archivé — il restera visible
+        sur la carte comme témoignage historique, avec une apparence grisée.
+      </div>
+      <div class="motif-list">
+        <button class="motif-btn" data-motif="disparu_efface"   onclick="selectMotif(this)">Effacé ou recouvert</button>
+        <button class="motif-btn" data-motif="disparu_degrade"  onclick="selectMotif(this)">Très dégradé, méconnaissable</button>
+        <button class="motif-btn" data-motif="disparu_demolit"  onclick="selectMotif(this)">Mur démoli ou transformé</button>
+        <button class="motif-btn" data-motif="disparu_autre"    onclick="selectMotif(this)">Autre raison</button>
+      </div>
+      <textarea class="modal-detail" id="modal-detail-disparu"
+        rows="2" placeholder="Précise si besoin (optionnel)…"></textarea>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="goToStep1()">← Retour</button>
+        <button class="modal-submit" id="modal-submit-disparu" onclick="submitReport('disparu')" disabled>
+          SIGNALER
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="map-footer">
+  <a href="mentions-legales.html">Mentions légales</a>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/config.js"></script>
+<script>
+const { createClient } = supabase;
+const db = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+
+const map = L.map('map', { center: CONFIG.MAP_CENTER, zoom: CONFIG.MAP_ZOOM });
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | <a href="mentions-legales.html">Mentions légales</a>',
+  maxZoom: 19,
+}).addTo(map);
+
+const FONTS = ['Permanent Marker', 'Rubik Dirt', 'Caveat'];
+
+let allTags = [];
+let markers = [];
+let currentFilter = 'tous';
+let reportingTagId = null;
+let selectedMotif = null;
+
+// --- Taille du blaze selon le zoom ---
+function blazeSize(zoom) {
+  const sizes = { 12:11, 13:13, 14:16, 15:20, 16:26, 17:34, 18:44, 19:56 };
+  return sizes[Math.min(Math.max(zoom, 12), 19)] || 16;
+}
+
+// --- Créer un marqueur blaze ---
+function createBlazeMarker(tag) {
+  const size  = blazeSize(map.getZoom());
+  const font  = FONTS[Math.abs(tag.blaze.charCodeAt(0)) % FONTS.length];
+  const isArchived = tag.archived === true;
+  // Archivé : couleur fixée en gris, opacité réduite, barré
+  const color = isArchived ? '#666' : tag.couleur;
+  const extraClass = isArchived ? ' archived' : '';
+  const icon = L.divIcon({
+    className: '',
+    html: `<div class="blaze-marker${extraClass}" style="font-family:'${font}',cursive;font-size:${size}px;color:${color};transform:rotate(${tag.rotation||0}deg)">${tag.blaze}</div>`,
+    iconAnchor: [0, size / 2],
+  });
+  const marker = L.marker([tag.latitude, tag.longitude], { icon });
+  marker.bindPopup(buildPopup(tag), { maxWidth: 260 });
+  return marker;
+}
+
+// --- Popup avec deux boutons de signalement ---
+function buildPopup(tag) {
+  const photo = tag.photo_url
+    ? `<img class="popup-photo" src="${tag.photo_url}" alt="Tag ${tag.blaze}" loading="lazy"/>`
+    : `<div class="popup-photo-placeholder">pas de photo</div>`;
+
+  const tagsMeta = [tag.support, tag.style].filter(Boolean)
+    .map(t => `<span class="popup-tag">${t}</span>`).join('');
+
+  const date = tag.date_vue
+    ? `<br>${new Date(tag.date_vue).toLocaleDateString('fr-FR', {year:'numeric',month:'long'})}`
+    : '';
+
+  const archivedBadge = tag.archived
+    ? `<div class="popup-archived-badge">👻 Tag archivé — n'existe plus physiquement</div>`
+    : '';
+
+  // Si déjà archivé, on masque le bouton "disparu" — inutile de re-signaler
+  const btnDisparu = !tag.archived
+    ? `<button class="popup-report-btn disparu" onclick="openModal('${tag.id}', 'disparu')">
+         👻 Disparu
+       </button>`
+    : '';
+
+  return `
+    <div class="popup-blaze" style="color:${tag.archived ? '#666' : tag.couleur}">${tag.blaze}</div>
+    ${archivedBadge}
+    ${photo}
+    <div class="popup-meta">${tagsMeta}${date}</div>
+    <div class="popup-actions">
+      <button class="popup-report-btn" onclick="openModal('${tag.id}', 'illicite')">
+        ⚑ Problème
+      </button>
+      ${btnDisparu}
+    </div>`;
+}
+
+// --- Charger les tags (validés + archivés, tous visibles) ---
+async function loadTags() {
+  const { data, error } = await db
+    .from('tags')
+    .select('*')
+    .eq('validated', true)
+    .eq('hidden', false)       // hidden=true = masqué pour contenu illicite (invisible)
+    .order('created_at', { ascending: false });
+
+  if (error) { showToast('Erreur de chargement'); return; }
+  allTags = data || [];        // inclut archived=true (grisés sur la carte)
+  renderMarkers();
+}
+
+function renderMarkers() {
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+  const filtered = currentFilter === 'tous'
+    ? allTags
+    : currentFilter === 'archives'
+    ? allTags.filter(t => t.archived)
+    : allTags.filter(t => t.style === currentFilter && !t.archived);
+
+  filtered.forEach(tag => {
+    const m = createBlazeMarker(tag);
+    m.addTo(map);
+    markers.push(m);
+  });
+
+  const actifs = allTags.filter(t => !t.archived).length;
+  const archives = allTags.filter(t => t.archived).length;
+  document.getElementById('count-badge').textContent =
+    actifs + ' tag' + (actifs > 1 ? 's' : '') +
+    (archives > 0 ? ` · ${archives} archivé${archives > 1 ? 's' : ''}` : '');
+}
+
+function setFilter(btn, value) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFilter = value;
+  renderMarkers();
+}
+
+map.on('zoomend', renderMarkers);
+
+// --- Signalement : état ---
+let reportingTagId  = null;
+let selectedMotif   = null;
+let currentType     = null; // 'illicite' | 'disparu'
+
+// --- Ouvrir la modal (étape 1 ou directement étape 2) ---
+function openModal(tagId, type) {
+  reportingTagId = tagId;
+  selectedMotif  = null;
+  currentType    = null;
+  map.closePopup();
+
+  // Réinitialiser tous les motifs
+  document.querySelectorAll('.motif-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('modal-detail-illicite').value = '';
+  document.getElementById('modal-detail-disparu').value  = '';
+  document.getElementById('modal-detail-illicite').classList.remove('show');
+  document.getElementById('modal-submit-illicite').disabled = true;
+  document.getElementById('modal-submit-disparu').disabled  = true;
+
+  if (type) {
+    // Accès direct depuis le popup — passer l'étape 1
+    showStep(type === 'illicite' ? 'step2-illicite' : 'step2-disparu');
+    currentType = type;
+  } else {
+    showStep('step1');
+  }
+
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function showStep(stepId) {
+  ['step1','step2-illicite','step2-disparu'].forEach(id => {
+    document.getElementById('modal-' + id).style.display = 'none';
+  });
+  document.getElementById('modal-' + stepId).style.display = 'block';
+}
+
+function goToStep1() {
+  selectedMotif = null;
+  currentType   = null;
+  document.querySelectorAll('.motif-btn').forEach(b => b.classList.remove('selected'));
+  showStep('step1');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  reportingTagId = null;
+  selectedMotif  = null;
+  currentType    = null;
+}
+
+// Étape 1 : choisir le type
+function selectType(btn) {
+  currentType = btn.dataset.type;
+  showStep(currentType === 'illicite' ? 'step2-illicite' : 'step2-disparu');
+}
+
+// Étape 2 : choisir le motif
+function selectMotif(btn) {
+  // Ne sélectionner que dans le step visible
+  const stepId = currentType === 'disparu' ? 'modal-step2-disparu' : 'modal-step2-illicite';
+  document.querySelectorAll('#' + stepId + ' .motif-btn')
+    .forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedMotif = btn.dataset.motif;
+
+  const submitId = currentType === 'disparu' ? 'modal-submit-disparu' : 'modal-submit-illicite';
+  document.getElementById(submitId).disabled = false;
+
+  // Champ détail visible si motif "autre"
+  const detailId = currentType === 'disparu' ? 'modal-detail-disparu' : 'modal-detail-illicite';
+  const isAutre  = selectedMotif === 'autre' || selectedMotif === 'disparu_autre';
+  document.getElementById(detailId).classList.toggle('show', isAutre);
+}
+
+// --- Soumettre le signalement ---
+async function submitReport(type) {
+  if (!reportingTagId || !selectedMotif) return;
+
+  const submitId = type === 'disparu' ? 'modal-submit-disparu' : 'modal-submit-illicite';
+  const detailId = type === 'disparu' ? 'modal-detail-disparu' : 'modal-detail-illicite';
+  const btn    = document.getElementById(submitId);
+  btn.disabled = true;
+  btn.textContent = 'Envoi…';
+
+  const detail = document.getElementById(detailId).value.trim() || null;
+
+  const { error } = await db.from('signalements').insert({
+    tag_id:       reportingTagId,
+    motif:        selectedMotif,
+    detail:       detail,
+    type_signal:  type,          // 'illicite' | 'disparu'
+  });
+
+  if (error) {
+    showToast('Erreur lors du signalement');
+    btn.disabled = false;
+    btn.textContent = 'SIGNALER';
+    return;
+  }
+
+  closeModal();
+  showToast(
+    type === 'disparu'
+      ? 'Merci ! Si ce tag a bien disparu, il sera archivé après quelques signalements.'
+      : 'Signalement envoyé — merci pour ta vigilance.'
+  );
+
+  // Mise à jour locale optimiste
+  const tag = allTags.find(t => t.id === reportingTagId);
+  if (tag) {
+    if (type === 'illicite') {
+      tag.reports_count = (tag.reports_count || 0) + 1;
+      if (tag.reports_count >= 3) {
+        allTags = allTags.filter(t => t.id !== reportingTagId);
+        renderMarkers();
+      }
+    } else {
+      tag.disparus_count = (tag.disparus_count || 0) + 1;
+      if (tag.disparus_count >= 5) {
+        tag.archived = true;
+        renderMarkers();
+      }
+    }
+  }
+
+  btn.textContent = 'SIGNALER';
+}
+
+// Fermer la modal en cliquant en dehors
+document.getElementById('modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// --- Toast ---
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+loadTags();
+</script>
+</body>
+</html>

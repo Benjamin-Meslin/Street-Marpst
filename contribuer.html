@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ajouter un tag</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --surface2: #222;
+      --border: rgba(255,255,255,0.08);
+      --text: #f0ede8;
+      --text-muted: #888;
+      --accent: #E63946;
+    }
+
+    body {
+      font-family: 'Caveat', cursive;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 52px;
+      border-bottom: 0.5px solid var(--border);
+      background: var(--surface);
+    }
+
+    .logo {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 20px;
+      color: var(--accent);
+    }
+
+    .back-btn {
+      font-family: 'Caveat', cursive;
+      font-size: 15px;
+      color: var(--text-muted);
+      text-decoration: none;
+      border: 0.5px solid var(--border);
+      padding: 5px 14px;
+      border-radius: 6px;
+      transition: color 0.15s;
+    }
+
+    .back-btn:hover { color: var(--text); }
+
+    /* Layout 2 colonnes */
+    .layout {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      height: calc(100vh - 52px);
+    }
+
+    /* --- Formulaire --- */
+    .form-panel {
+      padding: 28px 28px 20px;
+      overflow-y: auto;
+      border-right: 0.5px solid var(--border);
+      background: var(--surface);
+    }
+
+    .form-title {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 26px;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .form-subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    .field {
+      margin-bottom: 22px;
+    }
+
+    label {
+      display: block;
+      font-size: 15px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    label span {
+      color: var(--accent);
+      margin-left: 2px;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    select {
+      width: 100%;
+      background: var(--surface2);
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Caveat', cursive;
+      font-size: 18px;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    select:focus {
+      border-color: rgba(255,255,255,0.25);
+    }
+
+    select option { background: #222; }
+
+    /* Aperçu blaze en temps réel */
+    .blaze-preview {
+      margin-top: 8px;
+      font-family: 'Permanent Marker', cursive;
+      font-size: 28px;
+      min-height: 40px;
+      transition: color 0.1s;
+      -webkit-text-stroke: 0.5px rgba(0,0,0,0.2);
+    }
+
+    /* Couleurs */
+    .color-grid {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .color-swatch {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.1s, transform 0.1s;
+    }
+
+    .color-swatch:hover { transform: scale(1.1); }
+    .color-swatch.active { border-color: #fff; }
+
+    .color-custom {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    input[type="color"] {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      background: none;
+      padding: 0;
+    }
+
+    .color-custom-label {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Upload photo */
+    .upload-zone {
+      border: 1px dashed rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      position: relative;
+    }
+
+    .upload-zone:hover {
+      border-color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .upload-zone.has-file {
+      border-color: var(--accent);
+      border-style: solid;
+    }
+
+    .upload-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .upload-icon {
+      font-size: 28px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .upload-text {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .upload-preview {
+      width: 100%;
+      max-height: 160px;
+      object-fit: cover;
+      border-radius: 6px;
+      display: none;
+    }
+
+    /* Localisation */
+    .loc-status {
+      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-top: 6px;
+    }
+
+    .loc-status.ok {
+      background: rgba(76, 175, 80, 0.1);
+      color: #4CAF50;
+    }
+
+    .loc-status.waiting {
+      background: rgba(255,255,255,0.05);
+      color: var(--text-muted);
+    }
+
+    .loc-status.error {
+      background: rgba(230, 57, 70, 0.1);
+      color: var(--accent);
+    }
+
+    .loc-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .loc-btn {
+      font-family: 'Caveat', cursive;
+      font-size: 14px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 0.5px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .loc-btn:hover { background: rgba(255,255,255,0.08); }
+
+    /* Submit */
+    .submit-btn {
+      width: 100%;
+      font-family: 'Permanent Marker', cursive;
+      font-size: 20px;
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.15s, transform 0.1s;
+      letter-spacing: 1px;
+    }
+
+    .submit-btn:hover { background: #c1121f; }
+    .submit-btn:active { transform: scale(0.98); }
+    .submit-btn:disabled {
+      background: rgba(255,255,255,0.1);
+      color: var(--text-muted);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .submit-note {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+
+    /* --- Carte de localisation --- */
+    #loc-map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .map-hint {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15,15,15,0.85);
+      border: 0.5px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+      pointer-events: none;
+      z-index: 1000;
+      white-space: nowrap;
+    }
+
+    .map-wrapper {
+      position: relative;
+      height: 100%;
+    }
+
+    /* Marqueur preview sur la carte */
+    .preview-blaze {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 22px;
+      white-space: nowrap;
+      -webkit-text-stroke: 0.5px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 24px;
+      font-size: 16px;
+      color: var(--text);
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      text-align: center;
+    }
+
+    .toast.show { opacity: 1; }
+    .toast.success { border-color: rgba(76,175,80,0.4); color: #4CAF50; }
+    .toast.error { border-color: rgba(230,57,70,0.4); color: var(--accent); }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      .layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">TAGS</div>
+  <a href="index.html" class="back-btn">← Voir la carte</a>
+</header>
+
+<div class="layout">
+
+  <!-- Formulaire -->
+  <div class="form-panel">
+    <div class="form-title">Poser ton tag</div>
+    <div class="form-subtitle">
+      Clique sur la carte à droite pour localiser ton tag,<br>
+      puis remplis les infos.
+    </div>
+
+    <!-- Blaze -->
+    <div class="field">
+      <label>Ton blaze <span>*</span></label>
+      <input type="text" id="input-blaze" placeholder="WEEIZ" maxlength="20"
+        oninput="updatePreview()" />
+      <div class="blaze-preview" id="blaze-preview">WEEIZ</div>
+    </div>
+
+    <!-- Couleur -->
+    <div class="field">
+      <label>Couleur</label>
+      <div class="color-grid" id="color-grid">
+        <div class="color-swatch active" style="background:#E63946" data-c="#E63946" onclick="setColor(this)"></div>
+        <div class="color-swatch" style="background:#FF9800" data-c="#FF9800" onclick="setColor(this)"></div>
+        <div class="color-swatch" style="background:#FFD600" data-c="#FFD600" onclick="setColor(this)"></div>
+        <div class="color-swatch" style="background:#4CAF50" data-c="#4CAF50" onclick="setColor(this)"></div>
+        <div class="color-swatch" style="background:#2196F3" data-c="#2196F3" onclick="setColor(this)"></div>
+        <div class="color-swatch" style="background:#9C27B0" data-c="#9C27B0" onclick="setColor(this)"></div>
+        <div class="color-swatch" style="background:#ffffff" data-c="#ffffff" onclick="setColor(this)"></div>
+        <div class="color-swatch" style="background:#f0ede8" data-c="#f0ede8" onclick="setColor(this)"></div>
+      </div>
+      <div class="color-custom">
+        <input type="color" id="color-custom" value="#E63946" oninput="setCustomColor(this.value)" />
+        <span class="color-custom-label">Autre couleur</span>
+      </div>
+    </div>
+
+    <!-- Photo -->
+    <div class="field">
+      <label>Photo du tag</label>
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="photo-input" accept="image/*" onchange="handlePhoto(this)"/>
+        <img class="upload-preview" id="upload-preview" alt="Aperçu"/>
+        <div id="upload-placeholder">
+          <div class="upload-icon">📷</div>
+          <div class="upload-text">Appuie pour choisir une photo</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Style -->
+    <div class="field">
+      <label>Style</label>
+      <select id="input-style">
+        <option value="">— choisir —</option>
+        <option value="tag simple">Tag simple</option>
+        <option value="throw-up">Throw-up</option>
+        <option value="calligraphie">Calligraphie</option>
+        <option value="autre">Autre</option>
+      </select>
+    </div>
+
+    <!-- Support -->
+    <div class="field">
+      <label>Support</label>
+      <select id="input-support">
+        <option value="">— choisir —</option>
+        <option value="mur">Mur</option>
+        <option value="volet">Volet</option>
+        <option value="mobilier urbain">Mobilier urbain</option>
+        <option value="sol">Sol</option>
+        <option value="autre">Autre</option>
+      </select>
+    </div>
+
+    <!-- Date -->
+    <div class="field">
+      <label>Date de prise de vue</label>
+      <input type="date" id="input-date" />
+    </div>
+
+    <!-- Localisation -->
+    <div class="field">
+      <label>Localisation <span>*</span></label>
+      <div class="loc-status waiting" id="loc-status">
+        Clique sur la carte pour placer le tag
+      </div>
+      <div class="loc-actions">
+        <button class="loc-btn" onclick="geolocate()">
+          ◎ Ma position GPS
+        </button>
+        <button class="loc-btn" onclick="resetLocation()">
+          ✕ Effacer
+        </button>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="submit-btn" onclick="submitTag()" disabled>
+      TAGGER LA CARTE
+    </button>
+    <div class="submit-note">
+      Ton tag sera visible après modération.<br>
+      Aucun compte requis.
+    </div>
+  </div>
+
+  <!-- Carte de localisation -->
+  <div class="map-wrapper">
+    <div class="map-hint" id="map-hint">Clique pour placer le tag</div>
+    <div id="loc-map"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/config.js"></script>
+<script>
+const { createClient } = supabase;
+const db = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+
+// --- État du formulaire ---
+let selectedColor = '#E63946';
+let selectedLat = null;
+let selectedLng = null;
+let selectedPhotoFile = null;
+let previewMarker = null;
+
+// --- Carte de localisation ---
+const locMap = L.map('loc-map', {
+  center: CONFIG.MAP_CENTER,
+  zoom: CONFIG.MAP_ZOOM,
+});
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors',
+  maxZoom: 19,
+}).addTo(locMap);
+
+locMap.on('click', (e) => {
+  setLocation(e.latlng.lat, e.latlng.lng);
+});
+
+// --- Placer le marqueur de localisation ---
+function setLocation(lat, lng) {
+  selectedLat = lat;
+  selectedLng = lng;
+
+  if (previewMarker) locMap.removeLayer(previewMarker);
+
+  const blaze = document.getElementById('input-blaze').value || 'TAG';
+  const icon = L.divIcon({
+    className: '',
+    html: `<div class="preview-blaze" style="color:${selectedColor}">${blaze}</div>`,
+    iconAnchor: [0, 11],
+  });
+
+  previewMarker = L.marker([lat, lng], { icon }).addTo(locMap);
+
+  document.getElementById('loc-status').className = 'loc-status ok';
+  document.getElementById('loc-status').textContent =
+    `Positionné : ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+
+  document.getElementById('map-hint').style.display = 'none';
+  checkFormReady();
+}
+
+// --- Géolocalisation GPS ---
+function geolocate() {
+  if (!navigator.geolocation) {
+    showToast('Géolocalisation non disponible', 'error');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      setLocation(pos.coords.latitude, pos.coords.longitude);
+      locMap.setView([pos.coords.latitude, pos.coords.longitude], 17);
+    },
+    () => showToast('Impossible d\'obtenir la position GPS', 'error')
+  );
+}
+
+// --- Effacer la localisation ---
+function resetLocation() {
+  selectedLat = null;
+  selectedLng = null;
+  if (previewMarker) {
+    locMap.removeLayer(previewMarker);
+    previewMarker = null;
+  }
+  document.getElementById('loc-status').className = 'loc-status waiting';
+  document.getElementById('loc-status').textContent = 'Clique sur la carte pour placer le tag';
+  document.getElementById('map-hint').style.display = 'block';
+  checkFormReady();
+}
+
+// --- Aperçu blaze en temps réel ---
+function updatePreview() {
+  const blaze = document.getElementById('input-blaze').value || 'WEEIZ';
+  const preview = document.getElementById('blaze-preview');
+  preview.textContent = blaze;
+  preview.style.color = selectedColor;
+
+  // Mettre à jour le marqueur sur la carte si déjà posé
+  if (previewMarker) {
+    const icon = L.divIcon({
+      className: '',
+      html: `<div class="preview-blaze" style="color:${selectedColor}">${blaze}</div>`,
+      iconAnchor: [0, 11],
+    });
+    previewMarker.setIcon(icon);
+  }
+
+  checkFormReady();
+}
+
+// --- Couleur ---
+function setColor(el) {
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  selectedColor = el.dataset.c;
+  document.getElementById('color-custom').value = selectedColor;
+  updatePreview();
+}
+
+function setCustomColor(val) {
+  selectedColor = val;
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+  updatePreview();
+}
+
+// --- Photo ---
+function handlePhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  selectedPhotoFile = file;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const preview = document.getElementById('upload-preview');
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+    document.getElementById('upload-placeholder').style.display = 'none';
+    document.getElementById('upload-zone').classList.add('has-file');
+  };
+  reader.readAsDataURL(file);
+}
+
+// --- Vérifier si le formulaire est prêt ---
+function checkFormReady() {
+  const blaze = document.getElementById('input-blaze').value.trim();
+  const ready = blaze.length > 0 && selectedLat !== null;
+  document.getElementById('submit-btn').disabled = !ready;
+}
+
+// --- Upload Cloudinary ---
+async function uploadToCloudinary(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CONFIG.CLOUDINARY_UPLOAD_PRESET);
+  formData.append('folder', 'tags');
+
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${CONFIG.CLOUDINARY_CLOUD_NAME}/image/upload`,
+    { method: 'POST', body: formData }
+  );
+
+  if (!res.ok) throw new Error('Échec upload Cloudinary');
+  const data = await res.json();
+
+  // URL optimisée : redimensionnée à 1200px max, qualité auto
+  return data.secure_url.replace('/upload/', '/upload/w_1200,q_auto,f_auto/');
+}
+
+// --- Soumettre le tag ---
+async function submitTag() {
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Envoi en cours...';
+
+  try {
+    const blaze   = document.getElementById('input-blaze').value.trim();
+    const style   = document.getElementById('input-style').value;
+    const support = document.getElementById('input-support').value;
+    const dateVue = document.getElementById('input-date').value;
+    const rotation = Math.round((Math.random() - 0.5) * 22);
+
+    // Upload photo si présente
+    let photoUrl = null;
+    if (selectedPhotoFile) {
+      showToast('Upload de la photo...', '');
+      photoUrl = await uploadToCloudinary(selectedPhotoFile);
+    }
+
+    // Insertion Supabase
+    const { error } = await db.from('tags').insert({
+      blaze,
+      couleur: selectedColor,
+      latitude: selectedLat,
+      longitude: selectedLng,
+      photo_url: photoUrl,
+      style: style || null,
+      support: support || null,
+      date_vue: dateVue || null,
+      rotation,
+      validated: false,
+    });
+
+    if (error) throw new Error(error.message);
+
+    showToast('Tag envoyé ! Il apparaîtra après modération.', 'success');
+
+    setTimeout(() => {
+      window.location.href = 'index.html';
+    }, 2500);
+
+  } catch (err) {
+    console.error(err);
+    showToast('Erreur : ' + err.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'TAGGER LA CARTE';
+  }
+}
+
+// --- Toast ---
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// --- Init ---
+document.getElementById('input-date').valueAsDate = new Date();
+updatePreview();
+</script>
+</body>
+</html>
