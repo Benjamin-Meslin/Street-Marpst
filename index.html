@@ -560,13 +560,22 @@ function createBlazeMarker(tag) {
   const size  = blazeSize(map.getZoom());
   const font  = FONTS[Math.abs(tag.blaze.charCodeAt(0)) % FONTS.length];
   const isArchived = tag.archived === true;
-  // Archivé : couleur fixée en gris, opacité réduite, barré
   const color = isArchived ? '#666' : tag.couleur;
   const extraClass = isArchived ? ' archived' : '';
   const icon = L.divIcon({
     className: '',
-    html: `<div class="blaze-marker${extraClass}" style="font-family:'${font}',cursive;font-size:${size}px;color:${color};transform:rotate(${tag.rotation||0}deg)">${tag.blaze}</div>`,
-    iconAnchor: [0, size / 2],
+    // transform: translate(-50%, -50%) centre le texte sur le point GPS
+    // quelle que soit la longueur du blaze
+    html: `<div class="blaze-marker${extraClass}" style="
+      font-family:'${font}',cursive;
+      font-size:${size}px;
+      color:${color};
+      transform: rotate(${tag.rotation||0}deg) translate(-50%, -50%);
+      transform-origin: center center;
+      white-space: nowrap;
+    ">${tag.blaze}</div>`,
+    iconAnchor: [0, 0],
+    iconSize:   [0, 0],
   });
   const marker = L.marker([tag.latitude, tag.longitude], { icon });
   marker.bindPopup(buildPopup(tag), { maxWidth: 260 });

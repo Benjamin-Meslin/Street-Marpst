@@ -542,8 +542,9 @@ function setLocation(lat, lng) {
   const blaze = document.getElementById('input-blaze').value || 'TAG';
   const icon = L.divIcon({
     className: '',
-    html: `<div class="preview-blaze" style="color:${selectedColor}">${blaze}</div>`,
-    iconAnchor: [0, 11],
+    html: `<div class="preview-blaze" style="color:${selectedColor};transform:translate(-50%,-50%)">${blaze}</div>`,
+    iconAnchor: [0, 0],
+    iconSize:   [0, 0],
   });
 
   previewMarker = L.marker([lat, lng], { icon }).addTo(locMap);
