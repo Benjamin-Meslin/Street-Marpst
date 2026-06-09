@@ -423,6 +423,14 @@
       <div class="modal-title" id="m-title1">Signaler ce tag</div>
       <div class="modal-sub" id="m-sub1">De quoi s'agit-il ?</div>
       <div class="motif-list">
+        <button class="motif-btn" data-type="pedo" onclick="selectType(this)"
+          style="border-color:rgba(230,57,70,0.4);background:rgba(230,57,70,0.06)">
+          <span style="font-size:18px">🚨</span>
+          <span id="m-pedo-btn">Contenu pédopornographique</span>
+          <span style="display:block;font-size:12px;color:var(--accent);margin-top:2px;font-weight:700" id="m-pedo-sub">
+            Masquage immédiat — 1 seul signalement suffit
+          </span>
+        </button>
         <button class="motif-btn" data-type="illicite" onclick="selectType(this)">
           <span style="font-size:18px">⚑</span>
           <span id="m-illicite-btn">Contenu problématique</span>
@@ -440,6 +448,31 @@
       </div>
       <div class="modal-actions">
         <button class="modal-cancel" onclick="closeModal()" id="m-cancel1">Annuler</button>
+      </div>
+    </div>
+
+    <!-- Étape 2 pedo : confirmation avant masquage immédiat -->
+    <div id="modal-step2-pedo" style="display:none">
+      <div class="modal-title" style="color:var(--accent)" id="m-title2p">🚨 Contenu pédopornographique</div>
+      <div class="modal-sub" id="m-sub2p">
+        Ce signalement entraîne le <strong>masquage immédiat</strong> du tag,
+        sans attendre d'autres signalements. L'obligation légale impose un
+        retrait et un signalement aux autorités (OCLCTIC).
+      </div>
+      <div class="motif-list">
+        <button class="motif-btn" data-motif="pedo_mineur"  onclick="selectMotif(this)" id="m-ped1"
+          style="border-color:rgba(230,57,70,0.3)">Représentation de mineur à caractère sexuel</button>
+        <button class="motif-btn" data-motif="pedo_autre"   onclick="selectMotif(this)" id="m-ped2"
+          style="border-color:rgba(230,57,70,0.3)">Autre contenu pédopornographique</button>
+      </div>
+      <textarea class="modal-detail" id="modal-detail-pedo"
+        rows="2" placeholder="Précise si besoin (optionnel)…"></textarea>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="goToStep1()" id="m-back-pedo">← Retour</button>
+        <button class="modal-submit" id="modal-submit-pedo" onclick="submitReport('pedo')" disabled
+          style="background:var(--accent)">
+          SIGNALER — MASQUAGE IMMÉDIAT
+        </button>
       </div>
     </div>
 
@@ -628,18 +661,20 @@ function openModal(tagId, type) {
   currentType    = null;
   map.closePopup();
 
-  // Réinitialiser tous les motifs
   document.querySelectorAll('.motif-btn').forEach(b => b.classList.remove('selected'));
   document.getElementById('modal-detail-illicite').value = '';
   document.getElementById('modal-detail-disparu').value  = '';
+  document.getElementById('modal-detail-pedo').value     = '';
   document.getElementById('modal-detail-illicite').classList.remove('show');
   document.getElementById('modal-submit-illicite').disabled = true;
   document.getElementById('modal-submit-disparu').disabled  = true;
+  document.getElementById('modal-submit-pedo').disabled     = true;
 
   if (type) {
-    // Accès direct depuis le popup — passer l'étape 1
-    showStep(type === 'illicite' ? 'step2-illicite' : 'step2-disparu');
     currentType = type;
+    if (type === 'pedo') showStep('step2-pedo');
+    else if (type === 'illicite') showStep('step2-illicite');
+    else showStep('step2-disparu');
   } else {
     showStep('step1');
   }
@@ -648,7 +683,7 @@ function openModal(tagId, type) {
 }
 
 function showStep(stepId) {
-  ['step1','step2-illicite','step2-disparu'].forEach(id => {
+  ['step1','step2-pedo','step2-illicite','step2-disparu'].forEach(id => {
     document.getElementById('modal-' + id).style.display = 'none';
   });
   document.getElementById('modal-' + stepId).style.display = 'block';
@@ -671,34 +706,49 @@ function closeModal() {
 // Étape 1 : choisir le type
 function selectType(btn) {
   currentType = btn.dataset.type;
-  showStep(currentType === 'illicite' ? 'step2-illicite' : 'step2-disparu');
+  if (currentType === 'pedo') showStep('step2-pedo');
+  else if (currentType === 'illicite') showStep('step2-illicite');
+  else showStep('step2-disparu');
 }
 
 // Étape 2 : choisir le motif
 function selectMotif(btn) {
-  // Ne sélectionner que dans le step visible
-  const stepId = currentType === 'disparu' ? 'modal-step2-disparu' : 'modal-step2-illicite';
+  const stepMap = {
+    'disparu':  'modal-step2-disparu',
+    'pedo':     'modal-step2-pedo',
+    'illicite': 'modal-step2-illicite',
+  };
+  const submitMap = {
+    'disparu':  'modal-submit-disparu',
+    'pedo':     'modal-submit-pedo',
+    'illicite': 'modal-submit-illicite',
+  };
+  const detailMap = {
+    'disparu':  'modal-detail-disparu',
+    'pedo':     'modal-detail-pedo',
+    'illicite': 'modal-detail-illicite',
+  };
+  const stepId = stepMap[currentType] || 'modal-step2-illicite';
   document.querySelectorAll('#' + stepId + ' .motif-btn')
     .forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
   selectedMotif = btn.dataset.motif;
-
-  const submitId = currentType === 'disparu' ? 'modal-submit-disparu' : 'modal-submit-illicite';
-  document.getElementById(submitId).disabled = false;
-
-  // Champ détail visible si motif "autre"
-  const detailId = currentType === 'disparu' ? 'modal-detail-disparu' : 'modal-detail-illicite';
-  const isAutre  = selectedMotif === 'autre' || selectedMotif === 'disparu_autre';
-  document.getElementById(detailId).classList.toggle('show', isAutre);
+  document.getElementById(submitMap[currentType]).disabled = false;
+  const isAutre = selectedMotif === 'autre' || selectedMotif === 'disparu_autre';
+  document.getElementById(detailMap[currentType]).classList.toggle('show', isAutre);
 }
 
 // --- Soumettre le signalement ---
 async function submitReport(type) {
   if (!reportingTagId || !selectedMotif) return;
 
-  const submitId = type === 'disparu' ? 'modal-submit-disparu' : 'modal-submit-illicite';
-  const detailId = type === 'disparu' ? 'modal-detail-disparu' : 'modal-detail-illicite';
-  const btn    = document.getElementById(submitId);
+  const submitId = type === 'disparu' ? 'modal-submit-disparu'
+                 : type === 'pedo'    ? 'modal-submit-pedo'
+                 : 'modal-submit-illicite';
+  const detailId = type === 'disparu' ? 'modal-detail-disparu'
+                 : type === 'pedo'    ? 'modal-detail-pedo'
+                 : 'modal-detail-illicite';
+  const btn = document.getElementById(submitId);
   btn.disabled = true;
   btn.textContent = 'Envoi…';
 
@@ -720,15 +770,19 @@ async function submitReport(type) {
 
   closeModal();
   showToast(
-    type === 'disparu'
-      ? TRANSLATIONS[currentLang]['toast-report-disparu']
-      : TRANSLATIONS[currentLang]['toast-report-illicite']
+    type === 'disparu' ? TRANSLATIONS[currentLang]['toast-report-disparu']
+    : type === 'pedo'  ? TRANSLATIONS[currentLang]['toast-report-pedo'] || 'Signalement urgent envoyé. Merci.'
+    : TRANSLATIONS[currentLang]['toast-report-illicite']
   );
 
   // Mise à jour locale optimiste
   const tag = allTags.find(t => t.id === reportingTagId);
   if (tag) {
-    if (type === 'illicite') {
+    if (type === 'pedo') {
+      // Masquage immédiat côté client dès 1 signalement
+      allTags = allTags.filter(t => t.id !== reportingTagId);
+      renderMarkers();
+    } else if (type === 'illicite') {
       tag.reports_count = (tag.reports_count || 0) + 1;
       if (tag.reports_count >= 3) {
         allTags = allTags.filter(t => t.id !== reportingTagId);
@@ -743,7 +797,7 @@ async function submitReport(type) {
     }
   }
 
-  btn.textContent = 'SIGNALER';
+  btn.textContent = type === 'pedo' ? 'SIGNALER — MASQUAGE IMMÉDIAT' : 'SIGNALER';
 }
 
 // Fermer la modal en cliquant en dehors
