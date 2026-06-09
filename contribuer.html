@@ -376,7 +376,10 @@
 
 <header>
   <div class="logo">TAGS</div>
-  <a href="index.html" class="back-btn">← Voir la carte</a>
+  <div style="display:flex;align-items:center;gap:10px">
+    <a href="index.html" class="back-btn" id="h-back">← Voir la carte</a>
+    <button class="btn" onclick="toggleLang()" id="lang-btn" style="font-family:'Caveat',cursive;font-size:13px;padding:5px 10px;border-radius:6px;border:0.5px solid var(--border);background:transparent;color:var(--text);cursor:pointer">EN</button>
+  </div>
 </header>
 
 <div class="layout">
@@ -720,8 +723,116 @@ function showToast(msg, type = '') {
   t._timer = setTimeout(() => t.classList.remove('show'), 3500);
 }
 
-// --- Init ---
+// --- i18n FR / EN ---
+let currentLang = localStorage.getItem('lang') || 'fr';
+
+const T_CONTRIBUER = {
+  fr: {
+    title:        'Carte des tags',
+    'h-back':     '← Voir la carte',
+    'lang-btn':   'EN',
+    formTitle:    'Poser ton tag',
+    formSub:      'Clique sur la carte à droite pour localiser ton tag,\npuis remplis les infos.',
+    labelBlaze:   'Ton blaze',
+    blazePh:      'WEEIZ',
+    labelColor:   'Couleur',
+    labelPhoto:   'Photo du tag',
+    uploadText:   'Appuie pour choisir une photo',
+    labelStyle:   'Style',
+    styleOpts:    ['— choisir —','Tag simple','Throw-up','Wildstyle','Bubble letters','Block letters','Fill-in','Piece','Bombing','Sticker / Slap','Calligraphie','Autre'],
+    labelSupport: 'Support',
+    suppOpts:     ['— choisir —','Mur','Volet','Mobilier urbain','Sol','Autre'],
+    labelDate:    'Date de prise de vue',
+    labelLoc:     'Localisation',
+    locWaiting:   'Clique sur la carte pour placer le tag',
+    btnGPS:       '◎ Ma position GPS',
+    btnReset:     '✕ Effacer',
+    submit:       'TAGGER LA CARTE',
+    submitNote:   'Ton tag apparaît immédiatement sur la carte.\nLes contenus inappropriés peuvent être signalés par la communauté.',
+    mapHint:      'Clique pour placer le tag',
+    toastUploading: 'Upload de la photo...',
+    toastSuccess: 'Tag envoyé !',
+    toastError:   'Erreur : ',
+    toastGPSErr:  "Impossible d'obtenir la position GPS",
+    locOk:        (lat, lng) => `Positionné : ${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+  },
+  en: {
+    title:        'Tags map',
+    'h-back':     '← Back to map',
+    'lang-btn':   'FR',
+    formTitle:    'Drop your tag',
+    formSub:      'Click on the map to place your tag,\nthen fill in the info.',
+    labelBlaze:   'Your blaze',
+    blazePh:      'WEEIZ',
+    labelColor:   'Colour',
+    labelPhoto:   'Photo of the tag',
+    uploadText:   'Tap to choose a photo',
+    labelStyle:   'Style',
+    styleOpts:    ['— choose —','Simple tag','Throw-up','Wildstyle','Bubble letters','Block letters','Fill-in','Piece','Bombing','Sticker / Slap','Calligraphy','Other'],
+    labelSupport: 'Surface',
+    suppOpts:     ['— choose —','Wall','Shutter','Street furniture','Ground','Other'],
+    labelDate:    'Date seen',
+    labelLoc:     'Location',
+    locWaiting:   'Click on the map to place the tag',
+    btnGPS:       '◎ Use my GPS',
+    btnReset:     '✕ Clear',
+    submit:       'TAG THE MAP',
+    submitNote:   'Your tag appears on the map immediately.\nInappropriate content can be reported by the community.',
+    mapHint:      'Click to place the tag',
+    toastUploading: 'Uploading photo...',
+    toastSuccess: 'Tag submitted!',
+    toastError:   'Error: ',
+    toastGPSErr:  'Unable to get GPS position',
+    locOk:        (lat, lng) => `Placed: ${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+  }
+};
+
+function applyLangContribuer(lang) {
+  const T = T_CONTRIBUER[lang];
+  document.title = T.title;
+  document.documentElement.lang = lang;
+  const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+  set('h-back',   T['h-back']);
+  set('lang-btn', T['lang-btn']);
+  document.querySelector('.form-title').textContent  = T.formTitle;
+  document.querySelector('.form-subtitle').textContent = T.formSub;
+  document.getElementById('map-hint').textContent   = T.mapHint;
+  document.getElementById('upload-text-label').textContent = T.uploadText;
+  // Labels
+  const labels = document.querySelectorAll('.field label');
+  const labelKeys = ['labelBlaze','labelColor','labelPhoto','labelStyle','labelSupport','labelDate','labelLoc'];
+  labels.forEach((el, i) => {
+    if (labelKeys[i]) {
+      const star = el.querySelector('span');
+      el.textContent = T[labelKeys[i]];
+      if (star) el.appendChild(star);
+    }
+  });
+  // Placeholder blaze
+  document.getElementById('input-blaze').placeholder = T.blazePh;
+  // Select style
+  const styleEl = document.getElementById('input-style');
+  [...styleEl.options].forEach((opt, i) => { opt.text = T.styleOpts[i] || opt.text; });
+  // Select support
+  const suppEl = document.getElementById('input-support');
+  [...suppEl.options].forEach((opt, i) => { opt.text = T.suppOpts[i] || opt.text; });
+  // Submit
+  document.getElementById('submit-btn').textContent = T.submit;
+  document.querySelector('.submit-note').textContent = T.submitNote;
+  localStorage.setItem('lang', lang);
+  currentLang = lang;
+}
+
+function toggleLang() {
+  applyLangContribuer(currentLang === 'fr' ? 'en' : 'fr');
+}
+
+// Ajouter un id sur le texte upload
+document.querySelector('.upload-text').id = 'upload-text-label';
+
+// Init
 document.getElementById('input-date').valueAsDate = new Date();
+applyLangContribuer(currentLang);
 updatePreview();
 </script>
 </body>

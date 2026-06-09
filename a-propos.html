@@ -295,10 +295,11 @@
 <header>
   <a href="index.html" class="logo">TAGS</a>
   <nav>
-    <a href="index.html">Carte</a>
-    <a href="a-propos.html" class="active">À propos</a>
-    <a href="mentions-legales.html">Légal</a>
-    <a href="contribuer.html" class="btn-contribute">+ Ajouter un tag</a>
+    <a href="index.html" id="nav-map">Carte</a>
+    <a href="a-propos.html" class="active" id="nav-about">À propos</a>
+    <a href="mentions-legales.html" id="nav-legal">Légal</a>
+    <a href="contribuer.html" class="btn-contribute" id="nav-contribute">+ Ajouter un tag</a>
+    <button onclick="toggleLangAbout()" id="lang-btn" style="font-family:'Caveat',cursive;font-size:13px;padding:5px 10px;border-radius:6px;border:0.5px solid rgba(255,255,255,0.08);background:transparent;color:#f0ede8;cursor:pointer">EN</button>
   </nav>
 </header>
 
@@ -418,5 +419,139 @@
   <a href="mentions-legales.html">Mentions légales</a>
 </footer>
 
+<script>
+const T_ABOUT = {
+  fr: {
+    'lang-btn':    'EN',
+    'nav-map':     'Carte',
+    'nav-about':   'À propos',
+    'nav-legal':   'Légal',
+    'nav-contribute': '+ Ajouter un tag',
+    title: 'À propos — Carte des tags',
+  },
+  en: {
+    'lang-btn':    'FR',
+    'nav-map':     'Map',
+    'nav-about':   'About',
+    'nav-legal':   'Legal',
+    'nav-contribute': '+ Add a tag',
+    title: 'About — Tags map',
+  }
+};
+
+// Textes de la page (par sélecteur CSS)
+const ABOUT_CONTENT = {
+  fr: {
+    'hero-sub':     'Une carte pour que les murs retiennent.<br><strong>Faite pour la rue.</strong>',
+    'section-label-1': 'Le projet',
+    'h2-1': 'Un mur ça parle.<br>On l\'écoute.',
+    'p1-1': 'Le tag c\'est la forme d\'expression la plus directe qui soit — pas de galerie, pas de vernissage, pas de permission. Juste un blaze sur un mur et l\'espace d\'une seconde d\'attention volée.',
+    'p1-2': 'Cette carte existe pour <span class="accent">documenter ce qui disparaît</span>. Un tag c\'est éphémère par nature — recouvert, effacé, démoli. Ici il laisse une trace.',
+    'quote': '"Un tag disparu n\'est pas un tag perdu."',
+    'p1-3': 'Le projet est collaboratif et ouvert : n\'importe qui peut ajouter un tag, signaler qu\'il a disparu, contribuer à construire cette archive vivante de la culture tag.',
+    'section-label-2': 'Pourquoi contribuer',
+    'h2-2': 'Ton blaze mérite<br>d\'être sur la carte.',
+    'r1-title': 'Laisser une trace', 'r1-text': 'Un tag recouvert demain reste visible ici. Archive ton travail avant qu\'il disparaisse.',
+    'r2-title': 'Être vu',           'r2-text': 'La carte est publique et accessible à tous. Ton blaze voyage au-delà du mur.',
+    'r3-title': 'Sans compte',       'r3-text': 'Pas d\'inscription, pas d\'email. Juste ton blaze, une photo et une localisation.',
+    'r4-title': 'Mémoire collective','r4-text': 'Les tags signalés disparus restent archivés. L\'histoire du mur reste vivante.',
+    'section-label-3': 'Comment ça marche',
+    'h2-3': 'Simple comme<br>un coup de bombe.',
+    'p3-1': 'Tu prends une photo d\'un tag. Tu cliques sur la carte pour le localiser. Tu entres le blaze et la couleur. C\'est tout.',
+    'p3-2': 'Si un tag disparaît, la communauté peut le signaler — il reste visible en archive, grisé, comme un vestige.',
+    'p3-3': 'Les données sont libres. Aucune pub, aucun algorithme, aucun réseau social. Juste une carte et des blazes.',
+    'cta-title': 'Pose ton tag.',
+    'cta-text':  'Un mur de pixels t\'attend.<br>Pas de compte, pas de fioriture — juste ton blaze sur la carte.',
+    'cta-btn':   '+ AJOUTER UN TAG',
+    'cta-note':  'Ou commence par explorer → <a href="index.html" style="color:var(--accent)">voir la carte</a>',
+  },
+  en: {
+    'hero-sub':     'A map so walls remember.<br><strong>Made for the streets.</strong>',
+    'section-label-1': 'The project',
+    'h2-1': 'Walls speak.<br>We listen.',
+    'p1-1': 'A tag is the most direct form of expression — no gallery, no opening night, no permission. Just a blaze on a wall and a stolen second of attention.',
+    'p1-2': 'This map exists to <span class="accent">document what disappears</span>. A tag is ephemeral by nature — painted over, erased, demolished. Here it leaves a trace.',
+    'quote': '"A gone tag is not a lost tag."',
+    'p1-3': 'The project is collaborative and open: anyone can add a tag, report that it has vanished, and help build this living archive of tag culture.',
+    'section-label-2': 'Why contribute',
+    'h2-2': 'Your blaze deserves<br>to be on the map.',
+    'r1-title': 'Leave a trace',      'r1-text': 'A tag painted over tomorrow stays visible here. Archive your work before it disappears.',
+    'r2-title': 'Be seen',            'r2-text': 'The map is public and open to all. Your blaze travels beyond the wall.',
+    'r3-title': 'No account needed',  'r3-text': 'No sign-up, no email. Just your blaze, a photo and a location.',
+    'r4-title': 'Collective memory',  'r4-text': 'Reported-gone tags stay archived. The wall\'s history lives on.',
+    'section-label-3': 'How it works',
+    'h2-3': 'Simple as<br>a spray can.',
+    'p3-1': 'Take a photo of a tag. Click on the map to place it. Enter the blaze and colour. That\'s it.',
+    'p3-2': 'If a tag disappears, the community can report it — it stays visible as an archive, greyed out, like a relic.',
+    'p3-3': 'The data is free. No ads, no algorithm, no social network. Just a map and blazes.',
+    'cta-title': 'Drop your tag.',
+    'cta-text':  'A pixel wall is waiting.<br>No account, no fuss — just your blaze on the map.',
+    'cta-btn':   '+ ADD A TAG',
+    'cta-note':  'Or start by exploring → <a href="index.html" style="color:var(--accent)">see the map</a>',
+  }
+};
+
+let currentLangAbout = localStorage.getItem('lang') || 'fr';
+
+function applyLangAbout(lang) {
+  const T  = T_ABOUT[lang];
+  const TC = ABOUT_CONTENT[lang];
+  document.title = T.title;
+  document.documentElement.lang = lang;
+
+  // Header nav
+  Object.entries(T).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  });
+
+  // Hero
+  document.querySelector('.hero-sub').innerHTML = TC['hero-sub'];
+
+  // Sections
+  const labels = document.querySelectorAll('.section-label');
+  labels[0].textContent = TC['section-label-1'];
+  labels[1].textContent = TC['section-label-2'];
+  labels[2].textContent = TC['section-label-3'];
+
+  const h2s = document.querySelectorAll('h2');
+  h2s[0].innerHTML = TC['h2-1'];
+  h2s[1].innerHTML = TC['h2-2'];
+  h2s[2].innerHTML = TC['h2-3'];
+
+  const paras = document.querySelectorAll('.section p');
+  paras[0].innerHTML = TC['p1-1'];
+  paras[1].innerHTML = TC['p1-2'];
+  paras[2].innerHTML = TC['p1-3'];
+  paras[3].innerHTML = TC['p3-1'];
+  paras[4].innerHTML = TC['p3-2'];
+  paras[5].innerHTML = TC['p3-3'];
+
+  document.querySelector('.quote').innerHTML = TC['quote'];
+
+  // Reasons
+  const rtitles = document.querySelectorAll('.reason-title');
+  const rtexts  = document.querySelectorAll('.reason-text');
+  ['r1','r2','r3','r4'].forEach((k, i) => {
+    rtitles[i].textContent = TC[k + '-title'];
+    rtexts[i].textContent  = TC[k + '-text'];
+  });
+
+  // CTA
+  document.querySelector('.cta-title').textContent = TC['cta-title'];
+  document.querySelector('.cta-text').innerHTML    = TC['cta-text'];
+  document.querySelector('.cta-btn').textContent   = TC['cta-btn'];
+  document.querySelector('.cta-note').innerHTML    = TC['cta-note'];
+
+  localStorage.setItem('lang', lang);
+  currentLangAbout = lang;
+}
+
+function toggleLangAbout() {
+  applyLangAbout(currentLangAbout === 'fr' ? 'en' : 'fr');
+}
+
+applyLangAbout(currentLangAbout);
+</script>
 </body>
 </html>

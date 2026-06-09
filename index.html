@@ -386,17 +386,18 @@
 <body>
 
 <header>
-  <div class="logo">TAGS<span>carte collaborative</span></div>
+  <div class="logo">TAGS<span id="h-tagline">carte collaborative</span></div>
   <div class="header-actions">
-    <a href="a-propos.html" class="btn">À propos</a>
+    <a href="a-propos.html" class="btn" id="h-about">À propos</a>
     <span class="count-badge" id="count-badge">chargement...</span>
-    <a href="contribuer.html" class="btn btn-primary">+ Ajouter un tag</a>
+    <a href="contribuer.html" class="btn btn-primary" id="h-add">+ Ajouter un tag</a>
+    <button class="btn" id="lang-btn" onclick="toggleLang()" style="font-size:13px;padding:5px 10px">EN</button>
   </div>
 </header>
 
 <div class="filters">
-  <span class="filter-label">Style :</span>
-  <button class="filter-btn active" onclick="setFilter(this,'tous')">Tous</button>
+  <span class="filter-label" id="f-label">Style :</span>
+  <button class="filter-btn active" onclick="setFilter(this,'tous')" id="f-tous">Tous</button>
   <button class="filter-btn" onclick="setFilter(this,'tag simple')">Tag simple</button>
   <button class="filter-btn" onclick="setFilter(this,'throw-up')">Throw-up</button>
   <button class="filter-btn" onclick="setFilter(this,'wildstyle')">Wildstyle</button>
@@ -406,9 +407,9 @@
   <button class="filter-btn" onclick="setFilter(this,'piece')">Piece</button>
   <button class="filter-btn" onclick="setFilter(this,'bombing')">Bombing</button>
   <button class="filter-btn" onclick="setFilter(this,'sticker')">Sticker / Slap</button>
-  <button class="filter-btn" onclick="setFilter(this,'calligraphie')">Calligraphie</button>
-  <button class="filter-btn" onclick="setFilter(this,'autre')">Autre</button>
-  <button class="filter-btn" onclick="setFilter(this,'archives')" style="margin-left:auto">👻 Archivés</button>
+  <button class="filter-btn" onclick="setFilter(this,'calligraphie')" id="f-calli">Calligraphie</button>
+  <button class="filter-btn" onclick="setFilter(this,'autre')" id="f-autre">Autre</button>
+  <button class="filter-btn" onclick="setFilter(this,'archives')" style="margin-left:auto" id="f-archives">👻 Archivés</button>
 </div>
 
 <div id="map"></div>
@@ -419,46 +420,46 @@
 
     <!-- Étape 1 : choisir le type de signalement -->
     <div id="modal-step1">
-      <div class="modal-title">Signaler ce tag</div>
-      <div class="modal-sub">De quoi s'agit-il ?</div>
+      <div class="modal-title" id="m-title1">Signaler ce tag</div>
+      <div class="modal-sub" id="m-sub1">De quoi s'agit-il ?</div>
       <div class="motif-list">
         <button class="motif-btn" data-type="illicite" onclick="selectType(this)">
           <span style="font-size:18px">⚑</span>
-          Contenu problématique
-          <span style="display:block;font-size:12px;color:var(--text-muted);margin-top:2px">
+          <span id="m-illicite-btn">Contenu problématique</span>
+          <span style="display:block;font-size:12px;color:var(--text-muted);margin-top:2px" id="m-illicite-sub">
             Contenu illicite, vie privée, propos haineux…
           </span>
         </button>
         <button class="motif-btn" data-type="disparu" onclick="selectType(this)">
           <span style="font-size:18px">👻</span>
-          Tag disparu
-          <span style="display:block;font-size:12px;color:var(--text-muted);margin-top:2px">
+          <span id="m-disparu-btn">Tag disparu</span>
+          <span style="display:block;font-size:12px;color:var(--text-muted);margin-top:2px" id="m-disparu-sub">
             Le tag n'existe plus physiquement à cet endroit
           </span>
         </button>
       </div>
       <div class="modal-actions">
-        <button class="modal-cancel" onclick="closeModal()">Annuler</button>
+        <button class="modal-cancel" onclick="closeModal()" id="m-cancel1">Annuler</button>
       </div>
     </div>
 
     <!-- Étape 2a : motifs illicites -->
     <div id="modal-step2-illicite" style="display:none">
-      <div class="modal-title">Contenu problématique</div>
-      <div class="modal-sub">
+      <div class="modal-title" id="m-title2a">Contenu problématique</div>
+      <div class="modal-sub" id="m-sub2a">
         Après 3 signalements, le tag est masqué automatiquement.
         Les contenus illicites sont traités sous 24–48h (obligation légale).
       </div>
       <div class="motif-list">
-        <button class="motif-btn" data-motif="contenu_illicite" onclick="selectMotif(this)">Contenu illicite ou choquant</button>
-        <button class="motif-btn" data-motif="vie_privee"       onclick="selectMotif(this)">Atteinte à la vie privée</button>
-        <button class="motif-btn" data-motif="haine"            onclick="selectMotif(this)">Propos haineux ou discriminatoires</button>
-        <button class="motif-btn" data-motif="autre"            onclick="selectMotif(this)">Autre motif</button>
+        <button class="motif-btn" data-motif="contenu_illicite" onclick="selectMotif(this)" id="m-mot1">Contenu illicite ou choquant</button>
+        <button class="motif-btn" data-motif="vie_privee"       onclick="selectMotif(this)" id="m-mot2">Atteinte à la vie privée</button>
+        <button class="motif-btn" data-motif="haine"            onclick="selectMotif(this)" id="m-mot3">Propos haineux ou discriminatoires</button>
+        <button class="motif-btn" data-motif="autre"            onclick="selectMotif(this)" id="m-mot4">Autre motif</button>
       </div>
       <textarea class="modal-detail" id="modal-detail-illicite"
         rows="2" placeholder="Précise si besoin (optionnel)…"></textarea>
       <div class="modal-actions">
-        <button class="modal-cancel" onclick="goToStep1()">← Retour</button>
+        <button class="modal-cancel" onclick="goToStep1()" id="m-back1">← Retour</button>
         <button class="modal-submit" id="modal-submit-illicite" onclick="submitReport('illicite')" disabled>
           SIGNALER
         </button>
@@ -467,21 +468,21 @@
 
     <!-- Étape 2b : tag disparu -->
     <div id="modal-step2-disparu" style="display:none">
-      <div class="modal-title">Tag disparu ?</div>
-      <div class="modal-sub">
+      <div class="modal-title" id="m-title2b">Tag disparu ?</div>
+      <div class="modal-sub" id="m-sub2b">
         Après 5 signalements, le tag sera archivé — il restera visible
         sur la carte comme témoignage historique, avec une apparence grisée.
       </div>
       <div class="motif-list">
-        <button class="motif-btn" data-motif="disparu_efface"   onclick="selectMotif(this)">Effacé ou recouvert</button>
-        <button class="motif-btn" data-motif="disparu_degrade"  onclick="selectMotif(this)">Très dégradé, méconnaissable</button>
-        <button class="motif-btn" data-motif="disparu_demolit"  onclick="selectMotif(this)">Mur démoli ou transformé</button>
-        <button class="motif-btn" data-motif="disparu_autre"    onclick="selectMotif(this)">Autre raison</button>
+        <button class="motif-btn" data-motif="disparu_efface"   onclick="selectMotif(this)" id="m-dis1">Effacé ou recouvert</button>
+        <button class="motif-btn" data-motif="disparu_degrade"  onclick="selectMotif(this)" id="m-dis2">Très dégradé, méconnaissable</button>
+        <button class="motif-btn" data-motif="disparu_demolit"  onclick="selectMotif(this)" id="m-dis3">Mur démoli ou transformé</button>
+        <button class="motif-btn" data-motif="disparu_autre"    onclick="selectMotif(this)" id="m-dis4">Autre raison</button>
       </div>
       <textarea class="modal-detail" id="modal-detail-disparu"
         rows="2" placeholder="Précise si besoin (optionnel)…"></textarea>
       <div class="modal-actions">
-        <button class="modal-cancel" onclick="goToStep1()">← Retour</button>
+        <button class="modal-cancel" onclick="goToStep1()" id="m-back2">← Retour</button>
         <button class="modal-submit" id="modal-submit-disparu" onclick="submitReport('disparu')" disabled>
           SIGNALER
         </button>
@@ -539,28 +540,25 @@ function createBlazeMarker(tag) {
   return marker;
 }
 
-// --- Popup avec deux boutons de signalement ---
 function buildPopup(tag) {
+  const T = TRANSLATIONS[currentLang];
   const photo = tag.photo_url
     ? `<img class="popup-photo" src="${tag.photo_url}" alt="Tag ${tag.blaze}" loading="lazy"/>`
-    : `<div class="popup-photo-placeholder">pas de photo</div>`;
+    : `<div class="popup-photo-placeholder">—</div>`;
 
   const tagsMeta = [tag.support, tag.style].filter(Boolean)
     .map(t => `<span class="popup-tag">${t}</span>`).join('');
 
   const date = tag.date_vue
-    ? `<br>${new Date(tag.date_vue).toLocaleDateString('fr-FR', {year:'numeric',month:'long'})}`
+    ? `<br>${new Date(tag.date_vue).toLocaleDateString(currentLang === 'fr' ? 'fr-FR' : 'en-GB', {year:'numeric',month:'long'})}`
     : '';
 
   const archivedBadge = tag.archived
-    ? `<div class="popup-archived-badge">👻 Tag archivé — n'existe plus physiquement</div>`
+    ? `<div class="popup-archived-badge">${T['popup-archived']}</div>`
     : '';
 
-  // Si déjà archivé, on masque le bouton "disparu" — inutile de re-signaler
   const btnDisparu = !tag.archived
-    ? `<button class="popup-report-btn disparu" onclick="openModal('${tag.id}', 'disparu')">
-         👻 Disparu
-       </button>`
+    ? `<button class="popup-report-btn disparu" onclick="openModal('${tag.id}', 'disparu')">${T['popup-gone']}</button>`
     : '';
 
   return `
@@ -569,9 +567,7 @@ function buildPopup(tag) {
     ${photo}
     <div class="popup-meta">${tagsMeta}${date}</div>
     <div class="popup-actions">
-      <button class="popup-report-btn" onclick="openModal('${tag.id}', 'illicite')">
-        ⚑ Problème
-      </button>
+      <button class="popup-report-btn" onclick="openModal('${tag.id}', 'illicite')">${T['popup-problem']}</button>
       ${btnDisparu}
     </div>`;
 }
@@ -582,11 +578,11 @@ async function loadTags() {
     .from('tags')
     .select('*')
     .eq('validated', true)
-    .eq('hidden', false)       // hidden=true = masqué pour contenu illicite (invisible)
+    .eq('hidden', false)
     .order('created_at', { ascending: false });
 
-  if (error) { showToast('Erreur de chargement'); return; }
-  allTags = data || [];        // inclut archived=true (grisés sur la carte)
+  if (error) { showToast(TRANSLATIONS[currentLang]['toast-error-load']); return; }
+  allTags = data || [];
   renderMarkers();
 }
 
@@ -605,11 +601,10 @@ function renderMarkers() {
     markers.push(m);
   });
 
-  const actifs = allTags.filter(t => !t.archived).length;
-  const archives = allTags.filter(t => t.archived).length;
+  const actifs  = allTags.filter(t => !t.archived).length;
+  const archives = allTags.filter(t =>  t.archived).length;
   document.getElementById('count-badge').textContent =
-    actifs + ' tag' + (actifs > 1 ? 's' : '') +
-    (archives > 0 ? ` · ${archives} archivé${archives > 1 ? 's' : ''}` : '');
+    TRANSLATIONS[currentLang]['tags-count'](actifs, archives);
 }
 
 function setFilter(btn, value) {
@@ -726,8 +721,8 @@ async function submitReport(type) {
   closeModal();
   showToast(
     type === 'disparu'
-      ? 'Merci ! Si ce tag a bien disparu, il sera archivé après quelques signalements.'
-      : 'Signalement envoyé — merci pour ta vigilance.'
+      ? TRANSLATIONS[currentLang]['toast-report-disparu']
+      : TRANSLATIONS[currentLang]['toast-report-illicite']
   );
 
   // Mise à jour locale optimiste
@@ -763,6 +758,131 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
 }
+
+// --- i18n FR / EN ---
+let currentLang = localStorage.getItem('lang') || 'fr';
+
+const TRANSLATIONS = {
+  fr: {
+    'h-tagline':      'carte collaborative',
+    'h-about':        'À propos',
+    'h-add':          '+ Ajouter un tag',
+    'lang-btn':       'EN',
+    'f-label':        'Style :',
+    'f-tous':         'Tous',
+    'f-calli':        'Calligraphie',
+    'f-autre':        'Autre',
+    'f-archives':     '👻 Archivés',
+    'count-badge':    null, // géré dynamiquement
+    'm-title1':       'Signaler ce tag',
+    'm-sub1':         "De quoi s'agit-il ?",
+    'm-illicite-btn': 'Contenu problématique',
+    'm-illicite-sub': 'Contenu illicite, vie privée, propos haineux…',
+    'm-disparu-btn':  'Tag disparu',
+    'm-disparu-sub':  "Le tag n'existe plus physiquement à cet endroit",
+    'm-cancel1':      'Annuler',
+    'm-title2a':      'Contenu problématique',
+    'm-sub2a':        'Après 3 signalements, le tag est masqué automatiquement. Les contenus illicites sont traités sous 24–48h (obligation légale).',
+    'm-mot1':         'Contenu illicite ou choquant',
+    'm-mot2':         'Atteinte à la vie privée',
+    'm-mot3':         'Propos haineux ou discriminatoires',
+    'm-mot4':         'Autre motif',
+    'm-back1':        '← Retour',
+    'modal-submit-illicite': 'SIGNALER',
+    'm-title2b':      'Tag disparu ?',
+    'm-sub2b':        'Après 5 signalements, le tag sera archivé — il restera visible sur la carte comme témoignage historique, avec une apparence grisée.',
+    'm-dis1':         'Effacé ou recouvert',
+    'm-dis2':         'Très dégradé, méconnaissable',
+    'm-dis3':         'Mur démoli ou transformé',
+    'm-dis4':         'Autre raison',
+    'm-back2':        '← Retour',
+    'modal-submit-disparu': 'SIGNALER',
+    'modal-detail-illicite-placeholder': 'Précise si besoin (optionnel)…',
+    'modal-detail-disparu-placeholder':  'Précise si besoin (optionnel)…',
+    'popup-problem':  '⚑ Problème',
+    'popup-gone':     '👻 Disparu',
+    'popup-archived': "👻 Tag archivé — n'existe plus physiquement",
+    'toast-report-illicite': 'Signalement envoyé — merci pour ta vigilance.',
+    'toast-report-disparu':  'Merci ! Si ce tag a bien disparu, il sera archivé après quelques signalements.',
+    'toast-error-load': 'Erreur de chargement',
+    'loading': 'chargement...',
+    'tags-count': (n, a) => n + ' tag' + (n > 1 ? 's' : '') + (a > 0 ? ` · ${a} archivé${a > 1 ? 's' : ''}` : ''),
+  },
+  en: {
+    'h-tagline':      'collaborative map',
+    'h-about':        'About',
+    'h-add':          '+ Add a tag',
+    'lang-btn':       'FR',
+    'f-label':        'Style:',
+    'f-tous':         'All',
+    'f-calli':        'Calligraphy',
+    'f-autre':        'Other',
+    'f-archives':     '👻 Archived',
+    'count-badge':    null,
+    'm-title1':       'Report this tag',
+    'm-sub1':         'What is this about?',
+    'm-illicite-btn': 'Inappropriate content',
+    'm-illicite-sub': 'Illegal content, privacy, hate speech…',
+    'm-disparu-btn':  'Tag is gone',
+    'm-disparu-sub':  'The tag no longer exists physically at this location',
+    'm-cancel1':      'Cancel',
+    'm-title2a':      'Inappropriate content',
+    'm-sub2a':        'After 3 reports, the tag is automatically hidden. Illegal content is handled within 24–48h.',
+    'm-mot1':         'Illegal or shocking content',
+    'm-mot2':         'Privacy violation',
+    'm-mot3':         'Hate speech or discrimination',
+    'm-mot4':         'Other reason',
+    'm-back1':        '← Back',
+    'modal-submit-illicite': 'REPORT',
+    'm-title2b':      'Tag gone?',
+    'm-sub2b':        'After 5 reports, the tag will be archived — it will remain visible on the map as a historical record, greyed out.',
+    'm-dis1':         'Erased or covered',
+    'm-dis2':         'Very degraded, unrecognisable',
+    'm-dis3':         'Wall demolished or transformed',
+    'm-dis4':         'Other reason',
+    'm-back2':        '← Back',
+    'modal-submit-disparu': 'REPORT',
+    'modal-detail-illicite-placeholder': 'Add details if needed (optional)…',
+    'modal-detail-disparu-placeholder':  'Add details if needed (optional)…',
+    'popup-problem':  '⚑ Problem',
+    'popup-gone':     '👻 Gone',
+    'popup-archived': '👻 Archived tag — no longer exists physically',
+    'toast-report-illicite': 'Report sent — thanks for your vigilance.',
+    'toast-report-disparu':  'Thanks! If this tag is really gone, it will be archived after a few reports.',
+    'toast-error-load': 'Loading error',
+    'loading': 'loading...',
+    'tags-count': (n, a) => n + ' tag' + (n > 1 ? 's' : '') + (a > 0 ? ` · ${a} archived` : ''),
+  }
+};
+
+function applyLang(lang) {
+  const T = TRANSLATIONS[lang];
+  Object.entries(T).forEach(([id, val]) => {
+    if (val === null || typeof val === 'function') return;
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.tagName === 'TEXTAREA') el.placeholder = T[id + '-placeholder'] || val;
+    else el.textContent = val;
+  });
+  // Placeholders textarea
+  const ti = document.getElementById('modal-detail-illicite');
+  const td = document.getElementById('modal-detail-disparu');
+  if (ti) ti.placeholder = T['modal-detail-illicite-placeholder'];
+  if (td) td.placeholder = T['modal-detail-disparu-placeholder'];
+  // Attribut lang HTML
+  document.documentElement.lang = lang;
+  // Titre page
+  document.title = lang === 'fr' ? 'Carte des tags' : 'Tags map';
+  localStorage.setItem('lang', lang);
+  currentLang = lang;
+}
+
+function toggleLang() {
+  applyLang(currentLang === 'fr' ? 'en' : 'fr');
+}
+
+// Appliquer au chargement
+applyLang(currentLang);
 
 loadTags();
 </script>
