@@ -225,6 +225,87 @@
       border-color: rgba(150,150,150,0.4);
     }
 
+    /* Photo cliquable dans le popup */
+    .popup-photo {
+      cursor: zoom-in;
+      transition: opacity 0.15s;
+    }
+    .popup-photo:hover { opacity: 0.85; }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+      padding: 24px;
+    }
+
+    .lightbox.open { display: flex; }
+
+    .lightbox-img {
+      max-width: 90vw;
+      max-height: 75vh;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    }
+
+    .lightbox-blaze {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 28px;
+      text-align: center;
+    }
+
+    .lightbox-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .lightbox-btn {
+      font-family: 'Caveat', cursive;
+      font-size: 16px;
+      padding: 8px 20px;
+      border-radius: 8px;
+      border: 0.5px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.08);
+      color: #f0ede8;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+
+    .lightbox-btn:hover { background: rgba(255,255,255,0.15); }
+
+    .lightbox-btn.download {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .lightbox-btn.download:hover { background: #c1121f; }
+
+    .lightbox-close {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      font-size: 28px;
+      color: rgba(255,255,255,0.5);
+      cursor: pointer;
+      background: none;
+      border: none;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+
+    .lightbox-close:hover { color: #fff; }
+
     /* Blaze archivé (tag disparu) */
     .blaze-marker.archived {
       opacity: 0.35;
@@ -414,6 +495,19 @@
 
 <div id="map"></div>
 
+<!-- Lightbox photo -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+  <div class="lightbox-blaze" id="lightbox-blaze"></div>
+  <img class="lightbox-img" id="lightbox-img" src="" alt=""/>
+  <div class="lightbox-actions">
+    <a class="lightbox-btn download" id="lightbox-download" href="#" download target="_blank">
+      ⬇ Télécharger
+    </a>
+    <button class="lightbox-btn" onclick="closeLightbox()">Fermer</button>
+  </div>
+</div>
+
 <!-- Modal de signalement — 2 étapes -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
@@ -585,7 +679,10 @@ function createBlazeMarker(tag) {
 function buildPopup(tag) {
   const T = TRANSLATIONS[currentLang];
   const photo = tag.photo_url
-    ? `<img class="popup-photo" src="${tag.photo_url}" alt="Tag ${tag.blaze}" loading="lazy"/>`
+    ? `<img class="popup-photo" src="${tag.photo_url}"
+        alt="Tag ${tag.blaze}" loading="lazy"
+        onclick="openLightbox('${tag.photo_url}', '${tag.blaze}', '${tag.couleur}')"
+        title="${currentLang === 'fr' ? 'Cliquer pour agrandir' : 'Click to enlarge'}"/>`
     : `<div class="popup-photo-placeholder">—</div>`;
 
   const tagsMeta = [tag.support, tag.style].filter(Boolean)
@@ -946,6 +1043,35 @@ function toggleLang() {
 
 // Appliquer au chargement
 applyLang(currentLang);
+
+// --- Lightbox ---
+function openLightbox(url, blaze, couleur) {
+  map.closePopup();
+  document.getElementById('lightbox-img').src        = url;
+  document.getElementById('lightbox-img').alt        = 'Tag ' + blaze;
+  document.getElementById('lightbox-blaze').textContent = blaze;
+  document.getElementById('lightbox-blaze').style.color = couleur || '#E63946';
+  document.getElementById('lightbox-download').href  = url;
+  document.getElementById('lightbox-download').download = 'tag-' + blaze + '.jpg';
+  // Mettre à jour le label selon la langue
+  document.getElementById('lightbox-download').textContent =
+    currentLang === 'fr' ? '⬇ Télécharger' : '⬇ Download';
+  document.getElementById('lightbox').classList.add('open');
+  document.addEventListener('keydown', lightboxKeyHandler);
+}
+
+function closeLightbox(e) {
+  // Fermer seulement si clic sur le fond ou sur le bouton fermer
+  if (e && e.target !== document.getElementById('lightbox') &&
+      !e.target.classList.contains('lightbox-close')) return;
+  document.getElementById('lightbox').classList.remove('open');
+  document.getElementById('lightbox-img').src = '';
+  document.removeEventListener('keydown', lightboxKeyHandler);
+}
+
+function lightboxKeyHandler(e) {
+  if (e.key === 'Escape') closeLightbox();
+}
 
 loadTags();
 </script>
