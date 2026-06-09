@@ -462,6 +462,136 @@
     }
 
     .toast.show { opacity: 1; }
+
+    /* --- Panneau de recherche --- */
+    .search-panel {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2000;
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      width: 340px;
+      max-width: 90vw;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    }
+
+    .search-panel.hidden { display: none; }
+
+    .search-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .search-row:last-child { margin-bottom: 0; }
+
+    .search-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      width: 44px;
+      flex-shrink: 0;
+    }
+
+    .search-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 0.5px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'Caveat', cursive;
+      font-size: 16px;
+      padding: 6px 10px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .search-input:focus { border-color: rgba(255,255,255,0.25); }
+
+    .search-select {
+      flex: 1;
+      background: var(--surface2);
+      border: 0.5px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'Caveat', cursive;
+      font-size: 15px;
+      padding: 6px 10px;
+      outline: none;
+    }
+
+    .search-select option { background: #222; }
+
+    .search-date-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex: 1;
+    }
+
+    .search-date {
+      flex: 1;
+      background: var(--surface2);
+      border: 0.5px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'Caveat', cursive;
+      font-size: 14px;
+      padding: 6px 8px;
+      outline: none;
+    }
+
+    .search-date-sep {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .search-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 0.5px solid var(--border);
+    }
+
+    .search-results-count {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .search-reset {
+      font-family: 'Caveat', cursive;
+      font-size: 14px;
+      color: var(--accent);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    /* Bouton loupe dans le header */
+    .btn-search {
+      font-size: 16px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: 0.5px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-search.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
   </style>
 </head>
 <body>
@@ -471,6 +601,7 @@
   <div class="header-actions">
     <a href="a-propos.html" class="btn" id="h-about">À propos</a>
     <span class="count-badge" id="count-badge">chargement...</span>
+    <button class="btn-search" id="search-toggle-btn" onclick="toggleSearchPanel()" title="Rechercher">🔍</button>
     <a href="contribuer.html" class="btn btn-primary" id="h-add">+ Ajouter un tag</a>
     <button class="btn" id="lang-btn" onclick="toggleLang()" style="font-size:13px;padding:5px 10px">EN</button>
   </div>
@@ -493,7 +624,50 @@
   <button class="filter-btn" onclick="setFilter(this,'archives')" style="margin-left:auto" id="f-archives">👻 Archivés</button>
 </div>
 
-<div id="map"></div>
+<div id="map">
+  <!-- Panneau de recherche -->
+  <div class="search-panel hidden" id="search-panel">
+
+    <div class="search-row">
+      <span class="search-label" id="sl-blaze">Blaze</span>
+      <input class="search-input" id="search-blaze-input" type="text"
+        placeholder="WEEIZ…" oninput="applySearch()"/>
+    </div>
+
+    <div class="search-row">
+      <span class="search-label" id="sl-style">Style</span>
+      <select class="search-select" id="search-style-input" onchange="applySearch()">
+        <option value="">— tous —</option>
+        <option value="tag simple">Tag simple</option>
+        <option value="throw-up">Throw-up</option>
+        <option value="wildstyle">Wildstyle</option>
+        <option value="bubble letters">Bubble letters</option>
+        <option value="block letters">Block letters</option>
+        <option value="fill-in">Fill-in</option>
+        <option value="piece">Piece</option>
+        <option value="bombing">Bombing</option>
+        <option value="sticker">Sticker / Slap</option>
+        <option value="calligraphie">Calligraphie</option>
+        <option value="autre">Autre</option>
+      </select>
+    </div>
+
+    <div class="search-row">
+      <span class="search-label" id="sl-date">Date</span>
+      <div class="search-date-row">
+        <input class="search-date" id="search-date-from" type="date" onchange="applySearch()"/>
+        <span class="search-date-sep">→</span>
+        <input class="search-date" id="search-date-to" type="date" onchange="applySearch()"/>
+      </div>
+    </div>
+
+    <div class="search-footer">
+      <span class="search-results-count" id="search-count">—</span>
+      <button class="search-reset" onclick="resetSearch()" id="sl-reset">Réinitialiser</button>
+    </div>
+
+  </div>
+</div>
 
 <!-- Lightbox photo -->
 <div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
@@ -725,14 +899,57 @@ async function loadTags() {
   renderMarkers();
 }
 
+// --- État recherche ---
+let searchState = { blaze: '', style: '', dateFrom: '', dateTo: '' };
+let searchActive = false;
+
+function toggleSearchPanel() {
+  const panel = document.getElementById('search-panel');
+  const btn   = document.getElementById('search-toggle-btn');
+  searchActive = !searchActive;
+  panel.classList.toggle('hidden', !searchActive);
+  btn.classList.toggle('active', searchActive);
+  if (searchActive) document.getElementById('search-blaze-input').focus();
+}
+
+function applySearch() {
+  searchState.blaze    = document.getElementById('search-blaze-input').value.trim().toLowerCase();
+  searchState.style    = document.getElementById('search-style-input').value;
+  searchState.dateFrom = document.getElementById('search-date-from').value;
+  searchState.dateTo   = document.getElementById('search-date-to').value;
+  renderMarkers();
+}
+
+function resetSearch() {
+  document.getElementById('search-blaze-input').value  = '';
+  document.getElementById('search-style-input').value  = '';
+  document.getElementById('search-date-from').value    = '';
+  document.getElementById('search-date-to').value      = '';
+  searchState = { blaze: '', style: '', dateFrom: '', dateTo: '' };
+  renderMarkers();
+}
+
+function applySearchFilters(tags) {
+  return tags.filter(t => {
+    if (searchState.blaze && !t.blaze.toLowerCase().includes(searchState.blaze)) return false;
+    if (searchState.style && t.style !== searchState.style) return false;
+    if (searchState.dateFrom && t.date_vue && t.date_vue < searchState.dateFrom) return false;
+    if (searchState.dateTo   && t.date_vue && t.date_vue > searchState.dateTo)   return false;
+    return true;
+  });
+}
+
 function renderMarkers() {
   markers.forEach(m => map.removeLayer(m));
   markers = [];
-  const filtered = currentFilter === 'tous'
-    ? allTags
-    : currentFilter === 'archives'
-    ? allTags.filter(t => t.archived)
+
+  // Filtre style / archives
+  let filtered = currentFilter === 'tous'    ? allTags
+    : currentFilter === 'archives'           ? allTags.filter(t => t.archived)
     : allTags.filter(t => t.style === currentFilter && !t.archived);
+
+  // Filtre recherche
+  if (searchActive) filtered = applySearchFilters(filtered);
 
   filtered.forEach(tag => {
     const m = createBlazeMarker(tag);
@@ -744,6 +961,15 @@ function renderMarkers() {
   const archives = allTags.filter(t =>  t.archived).length;
   document.getElementById('count-badge').textContent =
     TRANSLATIONS[currentLang]['tags-count'](actifs, archives);
+
+  // Compteur de résultats dans le panneau
+  const countEl = document.getElementById('search-count');
+  if (countEl) {
+    const hasFilter = searchState.blaze || searchState.style || searchState.dateFrom || searchState.dateTo;
+    countEl.textContent = hasFilter
+      ? filtered.length + ' résultat' + (filtered.length > 1 ? 's' : '')
+      : allTags.length + ' tags au total';
+  }
 }
 
 function setFilter(btn, value) {
@@ -967,6 +1193,8 @@ const TRANSLATIONS = {
     'toast-error-load': 'Erreur de chargement',
     'loading': 'chargement...',
     'tags-count': (n, a) => n + ' tag' + (n > 1 ? 's' : '') + (a > 0 ? ` · ${a} archivé${a > 1 ? 's' : ''}` : ''),
+    'sl-blaze': 'Blaze', 'sl-style': 'Style', 'sl-date': 'Date', 'sl-reset': 'Réinitialiser',
+    'search-blaze-ph': 'WEEIZ…', 'search-style-all': '— tous —',
   },
   en: {
     'h-tagline':      'collaborative map',
@@ -1012,6 +1240,8 @@ const TRANSLATIONS = {
     'toast-error-load': 'Loading error',
     'loading': 'loading...',
     'tags-count': (n, a) => n + ' tag' + (n > 1 ? 's' : '') + (a > 0 ? ` · ${a} archived` : ''),
+    'sl-blaze': 'Blaze', 'sl-style': 'Style', 'sl-date': 'Date', 'sl-reset': 'Reset',
+    'search-blaze-ph': 'WEEIZ…', 'search-style-all': '— all —',
   }
 };
 
@@ -1019,19 +1249,24 @@ function applyLang(lang) {
   const T = TRANSLATIONS[lang];
   Object.entries(T).forEach(([id, val]) => {
     if (val === null || typeof val === 'function') return;
+    if (id.endsWith('-ph') || id.endsWith('-all')) return;
     const el = document.getElementById(id);
     if (!el) return;
-    if (el.tagName === 'TEXTAREA') el.placeholder = T[id + '-placeholder'] || val;
-    else el.textContent = val;
+    el.textContent = val;
   });
+  // Placeholders et options
+  const blazeIn = document.getElementById('search-blaze-input');
+  if (blazeIn) blazeIn.placeholder = T['search-blaze-ph'];
+  const styleIn = document.getElementById('search-style-input');
+  if (styleIn && styleIn.options[0]) styleIn.options[0].text = T['search-style-all'];
   // Placeholders textarea
   const ti = document.getElementById('modal-detail-illicite');
   const td = document.getElementById('modal-detail-disparu');
+  const tp = document.getElementById('modal-detail-pedo');
   if (ti) ti.placeholder = T['modal-detail-illicite-placeholder'];
   if (td) td.placeholder = T['modal-detail-disparu-placeholder'];
-  // Attribut lang HTML
+  if (tp) tp.placeholder = T['modal-detail-illicite-placeholder'];
   document.documentElement.lang = lang;
-  // Titre page
   document.title = lang === 'fr' ? 'Carte des tags' : 'Tags map';
   localStorage.setItem('lang', lang);
   currentLang = lang;
