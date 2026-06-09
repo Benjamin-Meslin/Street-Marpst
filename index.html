@@ -324,6 +324,42 @@
       margin-bottom: 6px;
     }
 
+    /* Spotted */
+    .popup-spotted {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0 4px;
+    }
+
+    .popup-spotted-btn {
+      font-family: 'Caveat', cursive;
+      font-size: 13px;
+      padding: 4px 12px;
+      border-radius: 6px;
+      border: 0.5px solid rgba(76,175,80,0.4);
+      background: rgba(76,175,80,0.08);
+      color: #4CAF50;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .popup-spotted-btn:hover { background: rgba(76,175,80,0.18); }
+
+    .popup-spotted-btn.done {
+      background: rgba(76,175,80,0.2);
+      color: #4CAF50;
+      cursor: default;
+      border-color: rgba(76,175,80,0.5);
+    }
+
+    .popup-spotted-count {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
     /* Modal signalement */
     .modal-overlay {
       position: absolute;
@@ -883,11 +919,24 @@ function buildPopup(tag) {
     ? `<button class="popup-report-btn disparu" onclick="openModal('${tag.id}', 'disparu')">${T['popup-gone']}</button>`
     : '';
 
+  const spottedCount = tag.spotted_count || 0;
+  const spottedLabel = currentLang === 'fr'
+    ? (spottedCount > 0 ? `👁 ${spottedCount} l'ont vu` : '👁 Personne encore')
+    : (spottedCount > 0 ? `👁 ${spottedCount} spotted it` : '👁 Nobody yet');
+  const spottedBtn = currentLang === 'fr' ? '✔ Je l\'ai vu !' : '✔ I spotted it!';
+
   return `
     <div class="popup-blaze" style="color:${tag.archived ? '#666' : tag.couleur}">${tag.blaze}</div>
     ${archivedBadge}
     ${photo}
     <div class="popup-meta">${tagsMeta}${date}</div>
+    <div class="popup-spotted">
+      <button class="popup-spotted-btn" id="spotted-btn-${tag.id}"
+        onclick="spotTag('${tag.id}', this)">
+        ${spottedBtn}
+      </button>
+      <span class="popup-spotted-count" id="spotted-count-${tag.id}">${spottedLabel}</span>
+    </div>
     <div class="popup-actions">
       <button class="popup-report-btn" onclick="openModal('${tag.id}', 'illicite')">${T['popup-problem']}</button>
       ${btnDisparu}
@@ -1315,6 +1364,50 @@ function closeLightbox(e) {
 
 function lightboxKeyHandler(e) {
   if (e.key === 'Escape') closeLightbox();
+}
+
+// --- Spotted ---
+// Stocke les IDs déjà spottés dans la session pour éviter les doubles
+const spottedIds = new Set(JSON.parse(sessionStorage.getItem('spotted') || '[]'));
+
+async function spotTag(tagId, btn) {
+  if (spottedIds.has(tagId)) return;
+
+  btn.disabled = true;
+  btn.textContent = '…';
+
+  const { data, error } = await db.rpc('increment_spotted', { tag_id: tagId });
+
+  if (error) {
+    // Fallback : incrément direct si la fonction RPC n'existe pas encore
+    const tag = allTags.find(t => t.id === tagId);
+    const newCount = (tag?.spotted_count || 0) + 1;
+    await db.from('tags').update({ spotted_count: newCount }).eq('id', tagId);
+    if (tag) tag.spotted_count = newCount;
+    updateSpottedUI(tagId, newCount);
+  } else {
+    const tag = allTags.find(t => t.id === tagId);
+    if (tag) tag.spotted_count = (tag.spotted_count || 0) + 1;
+    updateSpottedUI(tagId, tag?.spotted_count || 1);
+  }
+
+  spottedIds.add(tagId);
+  sessionStorage.setItem('spotted', JSON.stringify([...spottedIds]));
+}
+
+function updateSpottedUI(tagId, count) {
+  const btn   = document.getElementById('spotted-btn-' + tagId);
+  const label = document.getElementById('spotted-count-' + tagId);
+  if (btn) {
+    btn.textContent = currentLang === 'fr' ? '✔ Vu !' : '✔ Spotted!';
+    btn.classList.add('done');
+    btn.disabled = true;
+  }
+  if (label) {
+    label.textContent = currentLang === 'fr'
+      ? `👁 ${count} l'ont vu`
+      : `👁 ${count} spotted it`;
+  }
 }
 
 loadTags();
