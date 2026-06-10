@@ -532,6 +532,31 @@
     .btn-geolocate:hover { background: var(--surface2); }
     .btn-geolocate.locating { animation: pulse 1s infinite; }
 
+    /* Bouton installation PWA */
+    .btn-install {
+      position: absolute;
+      bottom: 32px;
+      right: 180px;
+      z-index: 1000;
+      height: 40px;
+      padding: 0 14px;
+      border-radius: 8px;
+      border: 0.5px solid rgba(230,57,70,0.4);
+      background: var(--surface);
+      color: var(--accent);
+      font-family: 'Caveat', cursive;
+      font-size: 15px;
+      cursor: pointer;
+      display: none; /* caché par défaut, affiché via JS quand disponible */
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-install:hover { background: rgba(230,57,70,0.08); }
+
     @keyframes pulse {
       0%, 100% { opacity: 1; }
       50%       { opacity: 0.4; }
@@ -701,6 +726,12 @@
 </div>
 
 <div id="map">
+  <!-- Bouton installation PWA -->
+  <button class="btn-install" id="btn-install" onclick="installApp()">
+    <span style="font-size:16px">⬇</span>
+    <span id="btn-install-label">Télécharger l'app</span>
+  </button>
+
   <!-- Bouton géolocalisation -->
   <button class="btn-geolocate" id="btn-geolocate" onclick="centerOnMe()">
     <span style="font-size:18px">📍</span>
@@ -1300,6 +1331,7 @@ const TRANSLATIONS = {
     'sl-blaze': 'Blaze', 'sl-style': 'Style', 'sl-date': 'Date', 'sl-reset': 'Réinitialiser',
     'search-blaze-ph': 'WEEIZ…', 'search-style-all': '— tous —',
     'btn-geolocate-label': 'Me localiser',
+    'btn-install-label':   'Télécharger l\'app',
   },
   en: {
     'h-tagline':      'collaborative map',
@@ -1348,6 +1380,7 @@ const TRANSLATIONS = {
     'sl-blaze': 'Blaze', 'sl-style': 'Style', 'sl-date': 'Date', 'sl-reset': 'Reset',
     'search-blaze-ph': 'WEEIZ…', 'search-style-all': '— all —',
     'btn-geolocate-label': 'Locate me',
+    'btn-install-label':   'Download app',
   }
 };
 
@@ -1457,6 +1490,34 @@ function updateSpottedUI(tagId, count) {
       : `👁 ${count} spotted it`;
   }
 }
+
+// --- Installation PWA ---
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Afficher le bouton seulement si l'installation est disponible
+  const btn = document.getElementById('btn-install');
+  if (btn) btn.style.display = 'flex';
+});
+
+async function installApp() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  const { outcome } = await deferredInstallPrompt.userChoice;
+  if (outcome === 'accepted') {
+    document.getElementById('btn-install').style.display = 'none';
+    deferredInstallPrompt = null;
+  }
+}
+
+// Cacher le bouton si l'app est déjà installée
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('btn-install');
+  if (btn) btn.style.display = 'none';
+  deferredInstallPrompt = null;
+});
 
 // --- Géolocalisation ---
 let userMarker = null;
