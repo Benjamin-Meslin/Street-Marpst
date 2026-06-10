@@ -4,7 +4,7 @@
 //  et un fonctionnement partiel hors ligne
 // ============================================================
 
-const CACHE_NAME = 'tags-map-v2';
+const CACHE_NAME = 'tags-map-v3';
 
 // Ressources à mettre en cache au premier chargement
 const STATIC_ASSETS = [
