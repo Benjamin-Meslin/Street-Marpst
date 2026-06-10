@@ -1,0 +1,41 @@
+{
+  "name": "Carte des Tags",
+  "short_name": "TAGS",
+  "description": "Carte collaborative des tags street art. Ajoute un tag, spotted, signale.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#0f0f0f",
+  "orientation": "portrait-primary",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "icons/screenshot.png",
+      "sizes": "1280x720",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["maps", "art", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Ajouter un tag",
+      "short_name": "Ajouter",
+      "url": "/contribuer.html",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

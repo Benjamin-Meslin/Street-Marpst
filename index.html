@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Carte des tags</title>
 
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f0f0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TAGS">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="description" content="Carte collaborative des tags street art. Ajoute un tag, spotted, signale.">
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -497,6 +506,35 @@
       pointer-events: none;
     }
 
+    /* Bouton géolocalisation sur la carte */
+    .btn-geolocate {
+      position: absolute;
+      bottom: 32px;
+      right: 12px;
+      z-index: 1000;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      border: 0.5px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      transition: background 0.15s;
+    }
+
+    .btn-geolocate:hover { background: var(--surface2); }
+    .btn-geolocate.locating { animation: pulse 1s infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+
     .toast.show { opacity: 1; }
 
     /* --- Panneau de recherche --- */
@@ -661,6 +699,11 @@
 </div>
 
 <div id="map">
+  <!-- Bouton géolocalisation -->
+  <button class="btn-geolocate" id="btn-geolocate" onclick="centerOnMe()" title="Me localiser">
+    📍
+  </button>
+
   <!-- Panneau de recherche -->
   <div class="search-panel hidden" id="search-panel">
 
@@ -1408,6 +1451,53 @@ function updateSpottedUI(tagId, count) {
       ? `👁 ${count} l'ont vu`
       : `👁 ${count} spotted it`;
   }
+}
+
+// --- Géolocalisation ---
+let userMarker = null;
+
+function centerOnMe() {
+  const btn = document.getElementById('btn-geolocate');
+  if (!navigator.geolocation) {
+    showToast(currentLang === 'fr' ? 'Géolocalisation non disponible' : 'Geolocation not available');
+    return;
+  }
+  btn.classList.add('locating');
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      btn.classList.remove('locating');
+      const { latitude, longitude } = pos.coords;
+      map.setView([latitude, longitude], 17);
+
+      // Marqueur de position
+      if (userMarker) map.removeLayer(userMarker);
+      userMarker = L.circleMarker([latitude, longitude], {
+        radius: 8,
+        fillColor: '#4A90E2',
+        fillOpacity: 1,
+        color: '#fff',
+        weight: 2,
+      }).addTo(map);
+      userMarker.bindPopup(
+        currentLang === 'fr' ? 'Vous êtes ici' : 'You are here'
+      ).openPopup();
+    },
+    () => {
+      btn.classList.remove('locating');
+      showToast(currentLang === 'fr'
+        ? 'Impossible d\'obtenir la position'
+        : 'Unable to get location');
+    },
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+}
+
+// --- Service Worker (PWA) ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js')
+      .catch(err => console.log('SW non enregistré :', err));
+  });
 }
 
 loadTags();
