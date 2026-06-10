@@ -427,7 +427,7 @@
         <img class="upload-preview" id="upload-preview" alt="Aperçu"/>
         <div id="upload-placeholder">
           <div class="upload-icon">📷</div>
-          <div class="upload-text">Appuie pour choisir une photo</div>
+          <div class="upload-text" id="upload-text-label">Appuie pour choisir une photo</div>
         </div>
       </div>
     </div>
@@ -836,14 +836,9 @@ function toggleLang() {
   applyLangContribuer(currentLang === 'fr' ? 'en' : 'fr');
 }
 
-// Ajouter un id sur le texte upload
-document.querySelector('.upload-text').id = 'upload-text-label';
-
-// Init — attendre que le DOM soit complètement chargé
+// Init
 document.getElementById('input-date').valueAsDate = new Date();
 updatePreview();
-
-// Appliquer la langue après un court délai pour s'assurer que tout est rendu
 setTimeout(() => applyLangContribuer(currentLang), 0);
 </script>
 </body>
