@@ -936,6 +936,17 @@ let allTags = [];
 let markers = [];
 let currentFilter = 'tous';
 
+// --- Échappement HTML pour prévenir les injections XSS ---
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // --- Taille du blaze selon le zoom ---
 function blazeSize(zoom) {
   const sizes = {
@@ -952,18 +963,17 @@ function createBlazeMarker(tag) {
   const isArchived = tag.archived === true;
   const color = isArchived ? '#666' : tag.couleur;
   const extraClass = isArchived ? ' archived' : '';
+  const safeBlaze = escHtml(tag.blaze);
   const icon = L.divIcon({
     className: '',
-    // transform: translate(-50%, -50%) centre le texte sur le point GPS
-    // quelle que soit la longueur du blaze
     html: `<div class="blaze-marker${extraClass}" style="
       font-family:'${font}',cursive;
       font-size:${size}px;
-      color:${color};
-      transform: rotate(${tag.rotation||0}deg) translate(-50%, -50%);
+      color:${escHtml(color)};
+      transform: rotate(${parseInt(tag.rotation)||0}deg) translate(-50%, -50%);
       transform-origin: center center;
       white-space: nowrap;
-    ">${tag.blaze}</div>`,
+    ">${safeBlaze}</div>`,
     iconAnchor: [0, 0],
     iconSize:   [0, 0],
   });
@@ -974,15 +984,18 @@ function createBlazeMarker(tag) {
 
 function buildPopup(tag) {
   const T = TRANSLATIONS[currentLang];
+  const safeBlaze  = escHtml(tag.blaze);
+  const safeCouleur = escHtml(tag.couleur);
+  const safeId     = escHtml(tag.id);
   const photo = tag.photo_url
-    ? `<img class="popup-photo" src="${tag.photo_url}"
-        alt="Tag ${tag.blaze}" loading="lazy"
-        onclick="openLightbox('${tag.photo_url}', '${tag.blaze}', '${tag.couleur}')"
+    ? `<img class="popup-photo" src="${escHtml(tag.photo_url)}"
+        alt="Tag ${safeBlaze}" loading="lazy"
+        onclick="openLightbox('${escHtml(tag.photo_url)}', '${safeBlaze}', '${safeCouleur}')"
         title="${currentLang === 'fr' ? 'Cliquer pour agrandir' : 'Click to enlarge'}"/>`
     : `<div class="popup-photo-placeholder">—</div>`;
 
   const tagsMeta = [tag.support, tag.style].filter(Boolean)
-    .map(t => `<span class="popup-tag">${t}</span>`).join('');
+    .map(t => `<span class="popup-tag">${escHtml(t)}</span>`).join('');
 
   const date = tag.date_vue
     ? `<br>${new Date(tag.date_vue).toLocaleDateString(currentLang === 'fr' ? 'fr-FR' : 'en-GB', {year:'numeric',month:'long'})}`
@@ -993,7 +1006,7 @@ function buildPopup(tag) {
     : '';
 
   const btnDisparu = !tag.archived
-    ? `<button class="popup-report-btn disparu" onclick="openModal('${tag.id}', 'disparu')">${T['popup-gone']}</button>`
+    ? `<button class="popup-report-btn disparu" onclick="openModal('${safeId}', 'disparu')">${T['popup-gone']}</button>`
     : '';
 
   const spottedCount = tag.spotted_count || 0;
@@ -1003,19 +1016,19 @@ function buildPopup(tag) {
   const spottedBtn = currentLang === 'fr' ? '✔ Je l\'ai vu !' : '✔ I spotted it!';
 
   return `
-    <div class="popup-blaze" style="color:${tag.archived ? '#666' : tag.couleur}">${tag.blaze}</div>
+    <div class="popup-blaze" style="color:${tag.archived ? '#666' : safeCouleur}">${safeBlaze}</div>
     ${archivedBadge}
     ${photo}
     <div class="popup-meta">${tagsMeta}${date}</div>
     <div class="popup-spotted">
-      <button class="popup-spotted-btn" id="spotted-btn-${tag.id}"
-        onclick="spotTag('${tag.id}', this)">
+      <button class="popup-spotted-btn" id="spotted-btn-${safeId}"
+        onclick="spotTag('${safeId}', this)">
         ${spottedBtn}
       </button>
-      <span class="popup-spotted-count" id="spotted-count-${tag.id}">${spottedLabel}</span>
+      <span class="popup-spotted-count" id="spotted-count-${safeId}">${spottedLabel}</span>
     </div>
     <div class="popup-actions">
-      <button class="popup-report-btn" onclick="openModal('${tag.id}', 'illicite')">${T['popup-problem']}</button>
+      <button class="popup-report-btn" onclick="openModal('${safeId}', 'illicite')">${T['popup-problem']}</button>
       ${btnDisparu}
     </div>`;
 }

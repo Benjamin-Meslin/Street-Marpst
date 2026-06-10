@@ -672,7 +672,12 @@ async function submitTag() {
   btn.textContent = 'Envoi en cours...';
 
   try {
-    const blaze   = document.getElementById('input-blaze').value.trim();
+    // Sanitisation : supprimer les balises HTML du blaze
+    const rawBlaze = document.getElementById('input-blaze').value.trim();
+    const blaze    = rawBlaze.replace(/<[^>]*>/g, '').substring(0, 20);
+
+    if (!blaze) throw new Error('Blaze invalide');
+
     const style   = document.getElementById('input-style').value;
     const support = document.getElementById('input-support').value;
     const dateVue = document.getElementById('input-date').value;
