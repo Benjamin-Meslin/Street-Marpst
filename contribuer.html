@@ -477,10 +477,10 @@
         Clique sur la carte pour placer le tag
       </div>
       <div class="loc-actions">
-        <button class="loc-btn" onclick="geolocate()">
+        <button class="loc-btn" id="btn-gps" onclick="geolocate()">
           ◎ Ma position GPS
         </button>
-        <button class="loc-btn" onclick="resetLocation()">
+        <button class="loc-btn" id="btn-clear" onclick="resetLocation()">
           ✕ Effacer
         </button>
       </div>
@@ -748,7 +748,6 @@ const T_CONTRIBUER = {
     locWaiting:   'Clique sur la carte pour placer le tag',
     btnGPS:       '◎ Ma position GPS',
     btnReset:     '✕ Effacer',
-    submit:       'TAGGER LA CARTE',
     submitNote:   'Ton tag apparaît immédiatement sur la carte.\nLes contenus inappropriés peuvent être signalés par la communauté.',
     mapHint:      'Clique pour placer le tag',
     toastUploading: 'Upload de la photo...',
@@ -817,6 +816,14 @@ function applyLangContribuer(lang) {
   // Select support
   const suppEl = document.getElementById('input-support');
   [...suppEl.options].forEach((opt, i) => { opt.text = T.suppOpts[i] || opt.text; });
+  // Boutons GPS
+  set('btn-gps',   T.btnGPS);
+  set('btn-clear', T.btnReset);
+  // Status localisation (seulement si en état "waiting")
+  const locStatus = document.getElementById('loc-status');
+  if (locStatus && locStatus.classList.contains('waiting')) {
+    locStatus.textContent = T.locWaiting;
+  }
   // Submit
   document.getElementById('submit-btn').textContent = T.submit;
   document.querySelector('.submit-note').textContent = T.submitNote;
