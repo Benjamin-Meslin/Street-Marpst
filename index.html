@@ -512,19 +512,21 @@
       bottom: 32px;
       right: 12px;
       z-index: 1000;
-      width: 40px;
       height: 40px;
+      padding: 0 14px;
       border-radius: 8px;
       border: 0.5px solid var(--border);
       background: var(--surface);
       color: var(--text);
-      font-size: 20px;
+      font-family: 'Caveat', cursive;
+      font-size: 15px;
       cursor: pointer;
       display: flex;
       align-items: center;
-      justify-content: center;
+      gap: 6px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.4);
       transition: background 0.15s;
+      white-space: nowrap;
     }
 
     .btn-geolocate:hover { background: var(--surface2); }
@@ -700,8 +702,9 @@
 
 <div id="map">
   <!-- Bouton géolocalisation -->
-  <button class="btn-geolocate" id="btn-geolocate" onclick="centerOnMe()" title="Me localiser">
-    📍
+  <button class="btn-geolocate" id="btn-geolocate" onclick="centerOnMe()">
+    <span style="font-size:18px">📍</span>
+    <span id="btn-geolocate-label">Me localiser</span>
   </button>
 
   <!-- Panneau de recherche -->
@@ -1296,6 +1299,7 @@ const TRANSLATIONS = {
     'tags-count': (n, a) => n + ' tag' + (n > 1 ? 's' : '') + (a > 0 ? ` · ${a} archivé${a > 1 ? 's' : ''}` : ''),
     'sl-blaze': 'Blaze', 'sl-style': 'Style', 'sl-date': 'Date', 'sl-reset': 'Réinitialiser',
     'search-blaze-ph': 'WEEIZ…', 'search-style-all': '— tous —',
+    'btn-geolocate-label': 'Me localiser',
   },
   en: {
     'h-tagline':      'collaborative map',
@@ -1343,6 +1347,7 @@ const TRANSLATIONS = {
     'tags-count': (n, a) => n + ' tag' + (n > 1 ? 's' : '') + (a > 0 ? ` · ${a} archived` : ''),
     'sl-blaze': 'Blaze', 'sl-style': 'Style', 'sl-date': 'Date', 'sl-reset': 'Reset',
     'search-blaze-ph': 'WEEIZ…', 'search-style-all': '— all —',
+    'btn-geolocate-label': 'Me localiser',
   }
 };
 
