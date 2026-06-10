@@ -748,6 +748,7 @@ const T_CONTRIBUER = {
     locWaiting:   'Clique sur la carte pour placer le tag',
     btnGPS:       '◎ Ma position GPS',
     btnReset:     '✕ Effacer',
+    submit:       'TAGGER LA CARTE',
     submitNote:   'Ton tag apparaît immédiatement sur la carte.\nLes contenus inappropriés peuvent être signalés par la communauté.',
     mapHint:      'Clique pour placer le tag',
     toastUploading: 'Upload de la photo...',
@@ -838,10 +839,12 @@ function toggleLang() {
 // Ajouter un id sur le texte upload
 document.querySelector('.upload-text').id = 'upload-text-label';
 
-// Init
+// Init — attendre que le DOM soit complètement chargé
 document.getElementById('input-date').valueAsDate = new Date();
-applyLangContribuer(currentLang);
 updatePreview();
+
+// Appliquer la langue après un court délai pour s'assurer que tout est rendu
+setTimeout(() => applyLangContribuer(currentLang), 0);
 </script>
 </body>
 </html>
