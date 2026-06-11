@@ -44,12 +44,13 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 20px;
+      padding: 0 12px;
       height: 52px;
       border-bottom: 0.5px solid var(--border);
       background: var(--surface);
       flex-shrink: 0;
       z-index: 1000;
+      gap: 8px;
     }
 
     .logo {
@@ -57,6 +58,7 @@
       font-size: 22px;
       color: var(--accent);
       letter-spacing: 1px;
+      flex-shrink: 0;
     }
 
     .logo span {
@@ -67,12 +69,24 @@
       opacity: 0.6;
     }
 
-    .header-actions { display: flex; gap: 10px; align-items: center; }
+    /* Cacher le tagline sur mobile */
+    @media (max-width: 600px) {
+      .logo span { display: none; }
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      overflow: hidden;
+      flex-shrink: 1;
+      min-width: 0;
+    }
 
     .btn {
       font-family: 'Caveat', cursive;
       font-size: 15px;
-      padding: 6px 16px;
+      padding: 6px 12px;
       border-radius: 6px;
       border: 0.5px solid var(--border);
       background: transparent;
@@ -80,9 +94,17 @@
       cursor: pointer;
       text-decoration: none;
       transition: background 0.15s;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .btn:hover { background: rgba(255,255,255,0.06); }
+
+    /* Cacher "À propos" sur petits écrans */
+    @media (max-width: 480px) {
+      #h-about { display: none; }
+      .count-badge { display: none; }
+    }
 
     .btn-primary {
       background: var(--accent);
@@ -92,29 +114,44 @@
 
     .btn-primary:hover { background: #c1121f; }
 
+    /* Raccourcir le bouton ajouter sur mobile */
+    @media (max-width: 480px) {
+      #h-add { font-size: 13px; padding: 6px 10px; }
+    }
+
     .filters {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 20px;
+      gap: 6px;
+      padding: 6px 12px;
       background: var(--surface);
       border-bottom: 0.5px solid var(--border);
       flex-shrink: 0;
       overflow-x: auto;
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none;
     }
 
-    .filter-label { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+    .filters::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+    .filter-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
 
     .filter-btn {
       font-family: 'Caveat', cursive;
       font-size: 13px;
-      padding: 3px 12px;
+      padding: 3px 10px;
       border-radius: 20px;
       border: 0.5px solid var(--border);
       background: transparent;
       color: var(--text-muted);
       cursor: pointer;
       white-space: nowrap;
+      flex-shrink: 0;
       transition: all 0.15s;
     }
 
@@ -535,8 +572,8 @@
     /* Bouton installation PWA */
     .btn-install {
       position: absolute;
-      bottom: 32px;
-      right: 180px;
+      bottom: 80px;
+      right: 12px;
       z-index: 1000;
       height: 40px;
       padding: 0 14px;
@@ -547,7 +584,7 @@
       font-family: 'Caveat', cursive;
       font-size: 15px;
       cursor: pointer;
-      display: none; /* caché par défaut, affiché via JS quand disponible */
+      display: none;
       align-items: center;
       gap: 6px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.4);

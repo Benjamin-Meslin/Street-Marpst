@@ -4,7 +4,7 @@
 //  et un fonctionnement partiel hors ligne
 // ============================================================
 
-const CACHE_NAME = 'tags-map-v5';
+const CACHE_NAME = 'tags-map-v7';
 
 // Ressources à mettre en cache au premier chargement
 const STATIC_ASSETS = [
@@ -41,6 +41,13 @@ self.addEventListener('activate', (event) => {
     )
   );
   self.clients.claim();
+});
+
+// --- Message SKIP_WAITING : forcer la mise à jour immédiate ---
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // --- Fetch : stratégie Network First pour les données,
