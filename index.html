@@ -100,10 +100,14 @@
 
     .btn:hover { background: rgba(255,255,255,0.06); }
 
-    /* Cacher "À propos" sur petits écrans */
+    /* Responsive mobile : tout visible, taille réduite */
     @media (max-width: 480px) {
-      #h-about { display: none; }
-      .count-badge { display: none; }
+      #h-add            { font-size: 12px; padding: 5px 8px; }
+      #h-about          { font-size: 12px; padding: 5px 8px; }
+      #lang-btn         { font-size: 12px; padding: 5px 8px; }
+      #search-toggle-btn{ font-size: 14px; padding: 5px 8px; }
+      .count-badge      { font-size: 10px; padding: 2px 6px; }
+      .header-actions   { gap: 4px; }
     }
 
     .btn-primary {
@@ -113,11 +117,6 @@
     }
 
     .btn-primary:hover { background: #c1121f; }
-
-    /* Raccourcir le bouton ajouter sur mobile */
-    @media (max-width: 480px) {
-      #h-add { font-size: 13px; padding: 6px 10px; }
-    }
 
     .filters {
       display: flex;
@@ -1685,6 +1684,12 @@ if (isIOS && !isInStandaloneMode) {
 // Mise à jour disponible via service worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.ready.then(reg => {
+    // SW déjà en attente au chargement (cas fréquent)
+    if (reg.waiting) {
+      swWaitingWorker = reg.waiting;
+      showInstallBtn('update');
+    }
+    // Nouveau SW trouvé pendant la session
     reg.addEventListener('updatefound', () => {
       const newWorker = reg.installing;
       newWorker.addEventListener('statechange', () => {
@@ -1695,6 +1700,10 @@ if ('serviceWorker' in navigator) {
       });
     });
   });
+  // Vérifier une mise à jour toutes les 60 secondes
+  setInterval(() => {
+    navigator.serviceWorker.ready.then(reg => reg.update());
+  }, 60000);
 }
 
 function applyUpdate() {
