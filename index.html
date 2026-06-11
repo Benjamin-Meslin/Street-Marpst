@@ -601,6 +601,55 @@
 
     .toast.show { opacity: 1; }
 
+    /* Modale instructions iOS */
+    .ios-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 9000;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 20px;
+    }
+    .ios-modal.open { display: flex; }
+    .ios-modal-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 20px;
+      max-width: 340px;
+      width: 90%;
+      text-align: center;
+    }
+    .ios-modal-title {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 22px;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+    .ios-step {
+      font-size: 16px;
+      color: var(--text);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-align: left;
+    }
+    .ios-step-icon { font-size: 24px; flex-shrink: 0; }
+    .ios-close {
+      margin-top: 20px;
+      font-family: 'Caveat', cursive;
+      font-size: 16px;
+      padding: 8px 24px;
+      border-radius: 8px;
+      border: 0.5px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
     /* --- Panneau de recherche --- */
     .search-panel {
       position: absolute;
@@ -816,6 +865,26 @@
       <button class="search-reset" onclick="resetSearch()" id="sl-reset">Réinitialiser</button>
     </div>
 
+  </div>
+</div>
+
+<!-- Modale instructions installation iOS -->
+<div class="ios-modal" id="ios-modal" onclick="closeIOSModal()">
+  <div class="ios-modal-card" onclick="event.stopPropagation()">
+    <div class="ios-modal-title" id="ios-title">Installer TAGS</div>
+    <div class="ios-step">
+      <span class="ios-step-icon">1️⃣</span>
+      <span id="ios-step1">Appuie sur l'icône <strong>Partage</strong> en bas de Safari</span>
+    </div>
+    <div class="ios-step">
+      <span class="ios-step-icon">2️⃣</span>
+      <span id="ios-step2">Fais défiler et appuie sur <strong>"Sur l'écran d'accueil"</strong></span>
+    </div>
+    <div class="ios-step">
+      <span class="ios-step-icon">3️⃣</span>
+      <span id="ios-step3">Appuie sur <strong>"Ajouter"</strong> en haut à droite</span>
+    </div>
+    <button class="ios-close" id="ios-close-btn" onclick="closeIOSModal()">Fermer</button>
   </div>
 </div>
 
@@ -1382,6 +1451,11 @@ const TRANSLATIONS = {
     'search-blaze-ph': 'WEEIZ…', 'search-style-all': '— tous —',
     'btn-geolocate-label': 'Me localiser',
     'btn-install-label':   'Télécharger l\'app',
+    'ios-title':    'Installer TAGS',
+    'ios-step1':    'Appuie sur l\'icône <strong>Partage</strong> en bas de Safari',
+    'ios-step2':    'Fais défiler et appuie sur <strong>"Sur l\'écran d\'accueil"</strong>',
+    'ios-step3':    'Appuie sur <strong>"Ajouter"</strong> en haut à droite',
+    'ios-close-btn':'Fermer',
   },
   en: {
     'h-tagline':      'collaborative map',
@@ -1431,6 +1505,11 @@ const TRANSLATIONS = {
     'search-blaze-ph': 'WEEIZ…', 'search-style-all': '— all —',
     'btn-geolocate-label': 'Locate me',
     'btn-install-label':   'Download app',
+    'ios-title':    'Install TAGS',
+    'ios-step1':    'Tap the <strong>Share</strong> icon at the bottom of Safari',
+    'ios-step2':    'Scroll down and tap <strong>"Add to Home Screen"</strong>',
+    'ios-step3':    'Tap <strong>"Add"</strong> in the top right',
+    'ios-close-btn':'Close',
   }
 };
 
@@ -1441,7 +1520,9 @@ function applyLang(lang) {
     if (id.endsWith('-ph') || id.endsWith('-all')) return;
     const el = document.getElementById(id);
     if (!el) return;
-    el.textContent = val;
+    // Les étapes iOS contiennent du HTML (<strong>)
+    if (id.startsWith('ios-step')) el.innerHTML = val;
+    else el.textContent = val;
   });
   // Placeholders et options
   const blazeIn = document.getElementById('search-blaze-input');
@@ -1543,13 +1624,41 @@ function updateSpottedUI(tagId, count) {
 
 // --- Installation PWA ---
 let deferredInstallPrompt = null;
+let swWaitingWorker = null;
 
+// Détection navigateur
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches
+  || window.navigator.standalone === true;
+
+function showInstallBtn(mode) {
+  // mode: 'install' | 'update' | 'ios' | 'hidden'
+  const btn = document.getElementById('btn-install');
+  const label = document.getElementById('btn-install-label');
+  if (!btn) return;
+  if (mode === 'hidden') { btn.style.display = 'none'; return; }
+  btn.style.display = 'flex';
+  if (mode === 'update') {
+    label.textContent = currentLang === 'fr' ? 'Mettre à jour' : 'Update app';
+    btn.style.borderColor = 'rgba(76,175,80,0.5)';
+    btn.style.color = '#4CAF50';
+    btn.onclick = applyUpdate;
+  } else if (mode === 'ios') {
+    label.textContent = currentLang === 'fr' ? 'Installer l\'app' : 'Install app';
+    btn.onclick = showIOSInstructions;
+  } else {
+    label.textContent = currentLang === 'fr' ? 'Télécharger l\'app' : 'Download app';
+    btn.style.borderColor = 'rgba(230,57,70,0.4)';
+    btn.style.color = 'var(--accent)';
+    btn.onclick = installApp;
+  }
+}
+
+// Chrome/Android : prompt natif disponible
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
-  // Afficher le bouton seulement si l'installation est disponible
-  const btn = document.getElementById('btn-install');
-  if (btn) btn.style.display = 'flex';
+  if (!isInStandaloneMode) showInstallBtn('install');
 });
 
 async function installApp() {
@@ -1557,17 +1666,51 @@ async function installApp() {
   deferredInstallPrompt.prompt();
   const { outcome } = await deferredInstallPrompt.userChoice;
   if (outcome === 'accepted') {
-    document.getElementById('btn-install').style.display = 'none';
+    showInstallBtn('hidden');
     deferredInstallPrompt = null;
   }
 }
 
-// Cacher le bouton si l'app est déjà installée
+// Déjà installé sur cet appareil
 window.addEventListener('appinstalled', () => {
-  const btn = document.getElementById('btn-install');
-  if (btn) btn.style.display = 'none';
+  showInstallBtn('hidden');
   deferredInstallPrompt = null;
 });
+
+// iPhone Safari : pas de beforeinstallprompt, on montre les instructions
+if (isIOS && !isInStandaloneMode) {
+  showInstallBtn('ios');
+}
+
+// Mise à jour disponible via service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.ready.then(reg => {
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          swWaitingWorker = newWorker;
+          showInstallBtn('update');
+        }
+      });
+    });
+  });
+}
+
+function applyUpdate() {
+  if (swWaitingWorker) {
+    swWaitingWorker.postMessage({ type: 'SKIP_WAITING' });
+    window.location.reload();
+  }
+}
+
+// --- Modale instructions iOS ---
+function showIOSInstructions() {
+  document.getElementById('ios-modal').classList.add('open');
+}
+function closeIOSModal() {
+  document.getElementById('ios-modal').classList.remove('open');
+}
 
 // --- Géolocalisation ---
 let userMarker = null;
