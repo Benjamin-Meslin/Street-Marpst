@@ -1638,17 +1638,41 @@ function showInstallBtn(mode) {
   if (!btn) return;
   if (mode === 'hidden') { btn.style.display = 'none'; return; }
   btn.style.display = 'flex';
+
   if (mode === 'update') {
     label.textContent = currentLang === 'fr' ? 'Mettre à jour' : 'Update app';
     btn.style.borderColor = 'rgba(76,175,80,0.5)';
     btn.style.color = '#4CAF50';
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
     btn.onclick = applyUpdate;
+
+  } else if (mode === 'soon') {
+    // Bouton grisé informatif — pas encore cliquable pour installer
+    label.textContent = currentLang === 'fr' ? 'Installer l\'app' : 'Install app';
+    btn.style.borderColor = 'rgba(255,255,255,0.1)';
+    btn.style.color = 'var(--text-muted)';
+    btn.style.opacity = '0.7';
+    btn.style.cursor = 'default';
+    btn.onclick = showSoonToast;
+
   } else {
+    // mode === 'install'
     label.textContent = currentLang === 'fr' ? 'Installer l\'app' : 'Install app';
     btn.style.borderColor = 'rgba(230,57,70,0.4)';
     btn.style.color = 'var(--accent)';
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
     btn.onclick = handleInstallClick;
   }
+}
+
+function showSoonToast() {
+  showToast(
+    currentLang === 'fr'
+      ? 'Visite le site une 2ème fois après 5 min pour pouvoir installer l\'app'
+      : 'Visit the site a 2nd time after 5 min to be able to install the app'
+  );
 }
 
 function handleInstallClick() {
@@ -1684,9 +1708,12 @@ window.addEventListener('appinstalled', () => {
   deferredInstallPrompt = null;
 });
 
-// Afficher le bouton pour tout le monde sauf si déjà installé
-if (!isInStandaloneMode) {
+// iPhone Safari : bouton avec instructions
+if (isIOS && !isInStandaloneMode) {
   showInstallBtn('install');
+} else if (!isInStandaloneMode) {
+  // Autres navigateurs : bouton informatif en attendant le prompt
+  showInstallBtn('soon');
 }
 
 // Mise à jour disponible via service worker
@@ -1757,14 +1784,14 @@ function showIOSInstructions() {
       : 'Select <strong>"Home screen"</strong>';
   } else {
     document.getElementById('ios-step1').innerHTML = T
-      ? 'Dans la barre d\'adresse, cherche l\'icône <strong>⊕ Installer</strong>'
-      : 'In the address bar, look for the <strong>⊕ Install</strong> icon';
+      ? 'Appuie sur le menu <strong>⋮</strong> en haut à droite de Chrome'
+      : 'Tap the <strong>⋮</strong> menu in the top right of Chrome';
     document.getElementById('ios-step2').innerHTML = T
-      ? 'Ou ouvre le menu du navigateur'
-      : 'Or open the browser menu';
+      ? 'Appuie sur <strong>"Ajouter à l\'écran d\'accueil"</strong> ou <strong>"Installer l\'application"</strong>'
+      : 'Tap <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong>';
     document.getElementById('ios-step3').innerHTML = T
-      ? 'Cherche <strong>"Installer"</strong> ou <strong>"Ajouter à l\'écran d\'accueil"</strong>'
-      : 'Look for <strong>"Install"</strong> or <strong>"Add to home screen"</strong>';
+      ? 'Confirme en appuyant sur <strong>"Installer"</strong>'
+      : 'Confirm by tapping <strong>"Install"</strong>';
   }
   document.getElementById('ios-modal').classList.add('open');
 }
