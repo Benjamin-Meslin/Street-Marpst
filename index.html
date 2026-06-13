@@ -1692,13 +1692,16 @@ if (!isInStandaloneMode) {
 // Mise à jour disponible via service worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.ready.then(reg => {
-    if (reg.waiting) {
+    // SW en attente = une version précédente existait déjà
+    // On vérifie qu'un controller actif existe (= app déjà installée une fois)
+    if (reg.waiting && navigator.serviceWorker.controller) {
       swWaitingWorker = reg.waiting;
       showInstallBtn('update');
     }
     reg.addEventListener('updatefound', () => {
       const newWorker = reg.installing;
       newWorker.addEventListener('statechange', () => {
+        // Afficher MAJ seulement si une version précédente contrôle la page
         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
           swWaitingWorker = newWorker;
           showInstallBtn('update');
