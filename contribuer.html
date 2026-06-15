@@ -388,13 +388,16 @@
   <div class="form-panel">
     <div class="form-title">Poser ton tag</div>
     <div class="form-subtitle">
-      Clique sur la carte à droite pour localiser ton tag,<br>
+      Clique sur la carte à droite pour localiser le tag,<br>
       puis remplis les infos.
     </div>
 
     <!-- Blaze -->
     <div class="field">
-      <label>Ton blaze <span>*</span></label>
+      <label>Blaze du tag <span>*</span></label>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px">
+        (le nom ou la signature de l'auteur visible sur le tag)
+      </div>
       <input type="text" id="input-blaze" placeholder="WEEIZ" maxlength="20"
         oninput="updatePreview()" />
       <div class="blaze-preview" id="blaze-preview">WEEIZ</div>
@@ -738,8 +741,9 @@ const T_CONTRIBUER = {
     'h-back':     '← Voir la carte',
     'lang-btn':   'EN',
     formTitle:    'Poser ton tag',
-    formSub:      'Clique sur la carte à droite pour localiser ton tag,\npuis remplis les infos.',
-    labelBlaze:   'Ton blaze',
+    formSub:      'Clique sur la carte à droite pour localiser le tag,\npuis remplis les infos.',
+    labelBlaze:   'Blaze du tag',
+    blazeHint:    '(le nom ou la signature de l\'auteur visible sur le tag)',
     blazePh:      'WEEIZ',
     labelColor:   'Couleur',
     labelPhoto:   'Photo du tag',
@@ -768,7 +772,8 @@ const T_CONTRIBUER = {
     'lang-btn':   'FR',
     formTitle:    'Drop your tag',
     formSub:      'Click on the map to place your tag,\nthen fill in the info.',
-    labelBlaze:   'Your blaze',
+    labelBlaze:   'Tag\'s blaze',
+    blazeHint:    '(the name or signature of the artist visible on the tag)',
     blazePh:      'WEEIZ',
     labelColor:   'Colour',
     labelPhoto:   'Photo of the tag',
@@ -814,6 +819,9 @@ function applyLangContribuer(lang) {
       if (star) el.appendChild(star);
     }
   });
+  // Hint blaze
+  const blazeHintEl = document.querySelector('.field #input-blaze')?.parentElement?.querySelector('div[style]');
+  if (blazeHintEl) blazeHintEl.textContent = T.blazeHint;
   // Placeholder blaze
   document.getElementById('input-blaze').placeholder = T.blazePh;
   // Select style
