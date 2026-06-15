@@ -118,6 +118,46 @@
     }
     .tag-body { padding: 12px 14px; }
     .tag-blaze { font-family: 'Permanent Marker', cursive; font-size: 22px; margin-bottom: 6px; }
+
+    /* Édition inline du blaze */
+    .blaze-edit-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .tag-blaze-input {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 20px;
+      background: transparent;
+      border: none;
+      border-bottom: 1px dashed rgba(255,255,255,0.15);
+      outline: none;
+      width: 100%;
+      padding: 2px 0;
+      transition: border-color 0.15s;
+    }
+
+    .tag-blaze-input:focus {
+      border-bottom-color: rgba(255,255,255,0.4);
+    }
+
+    .blaze-save-btn {
+      font-size: 14px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 0.5px solid rgba(76,175,80,0.3);
+      background: rgba(76,175,80,0.08);
+      color: #4CAF50;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s;
+      display: none; /* visible seulement quand le champ est focus */
+    }
+
+    .tag-blaze-input:focus + .blaze-save-btn,
+    .blaze-save-btn:hover { display: inline-block; background: rgba(76,175,80,0.18); }
     .tag-info { font-size: 13px; color: var(--text-muted); line-height: 1.7; }
     .tag-coords { font-size: 11px; color: var(--text-muted); opacity: 0.5; margin-top: 4px; }
 
@@ -500,7 +540,16 @@ function renderGrid(gridId, tags, type) {
         style="${isArchived ? 'opacity:0.7' : ''}">
         ${photo}
         <div class="tag-body">
-          <div class="tag-blaze" style="color:${isArchived ? '#666' : tag.couleur};${isArchived ? 'text-decoration:line-through' : ''}">${tag.blaze}</div>
+          <div class="blaze-edit-row">
+            <input
+              class="tag-blaze-input"
+              id="blaze-input-${tag.id}"
+              value="${tag.blaze}"
+              style="color:${isArchived ? '#666' : tag.couleur};${isArchived ? 'text-decoration:line-through' : ''}"
+              onkeydown="if(event.key==='Enter') saveBlaze('${tag.id}')"
+            />
+            <button class="blaze-save-btn" onclick="saveBlaze('${tag.id}')">✓</button>
+          </div>
           <div class="tag-info">
             ${tag.style   ? `Style : ${tag.style}<br>`   : ''}
             ${tag.support ? `Support : ${tag.support}<br>` : ''}
@@ -516,8 +565,19 @@ function renderGrid(gridId, tags, type) {
   }).join('');
 }
 
-// --- Actions ---
-async function validateTag(id) {
+// --- Modifier le blaze ---
+async function saveBlaze(id) {
+  const input = document.getElementById('blaze-input-' + id);
+  if (!input) return;
+  const newBlaze = input.value.trim().replace(/<[^>]*>/g, '').substring(0, 20);
+  if (!newBlaze) { showToast('Le blaze ne peut pas être vide', 'error'); return; }
+
+  const { error } = await db.from('tags').update({ blaze: newBlaze }).eq('id', id);
+  if (error) { showToast('Erreur : ' + error.message, 'error'); return; }
+
+  input.blur();
+  showToast('Blaze mis à jour : ' + newBlaze, 'success');
+}
   const { error } = await db.from('tags').update({ validated: true }).eq('id', id);
   if (error) { showToast('Erreur : ' + error.message, 'error'); return; }
   removeCard(id);
